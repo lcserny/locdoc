@@ -1,0 +1,26 @@
+{
+    "name": "locdoc",
+    "version": "1.0.0",
+    "description": "",
+    "main": "src/main.js",
+    "type": "module",
+    "scripts": {
+        "test": "jest"
+    },
+    "bin": {
+        "locdoc": "./src/bin/locdoc.js"
+    },
+    "author": "",
+    "license": "ISC",
+    "devDependencies": {
+        "@babel/core": "^7.23.9",
+        "@babel/eslint-parser": "^7.23.10",
+        "@babel/preset-env": "^7.23.9",
+        "@types/jest": "^29.5.12",
+        "eslint": "^8.56.0",
+        "jest": "^29.7.0"
+    },
+    "dependencies": {
+        "argparse": "^2.0.1"
+    }
+}
