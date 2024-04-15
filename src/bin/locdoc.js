@@ -36,6 +36,8 @@ await deployHandler.clean();
 
 await removeWorkDir(workDir);
 
+// TODO: impl -v flag for verbose output
+
 // TODO: wrapper all errors
 // https://medium.com/@vickypaiyaa/power-of-advanced-error-handling-techniques-in-node-js-44d53cda3c61
 

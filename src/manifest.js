@@ -14,8 +14,8 @@ export class ManifestParser {
         const template = new Manifest();
         const manifest = YAML.parse(manifestFile);
         const mergedManifest = { ...template, ...manifest };
-        this.validate(manifest);
-        return manifest;
+        this.validate(mergedManifest);
+        return mergedManifest;
     }
 
     validate(manifest) {
@@ -32,9 +32,7 @@ export class ManifestParser {
         }
 
         if (manifest.config?.destinationPath == null) {
-            throw new Error(
-                "manifest provided has no `config.destinationPath`"
-            );
+            throw new Error("manifest provided has no `config.destinationPath`");
         }
     }
 }
