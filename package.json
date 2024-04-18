@@ -22,7 +22,6 @@
     },
     "dependencies": {
         "argparse": "^2.0.1",
-        "random-words": "^2.0.1",
         "tracer": "^1.3.0",
         "yaml": "^2.4.0",
         "zx": "^8.0.1"

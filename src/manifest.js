@@ -1,6 +1,5 @@
 import * as fs from "fs/promises";
 import YAML from "yaml";
-import { generate } from "random-words";
 
 export class ManifestParser {
     constructor(logger) {
@@ -11,7 +10,8 @@ export class ManifestParser {
         this.logger.info(`Parsing manifest '${manifestFilePath}'`);
 
         const manifestFile = await fs.readFile(manifestFilePath, "utf8");
-        const template = new Manifest();
+        const randomName = await $`echo -n $RANDOM`;
+        const template = new Manifest(randomName);
         const manifest = YAML.parse(manifestFile);
         const mergedManifest = { ...template, ...manifest };
         this.validate(mergedManifest);
@@ -44,8 +44,8 @@ export class Manifest {
     image = { name: "", version: "1.0" };
     deploy = { type: "container", name: "", network: undefined, runFlags: undefined };
 
-    constructor() {
-        this.name = generate({exactly: 1})[0];
+    constructor(randomName) {
+        this.name = randomName;
         this.deploy.name = this.name;
         this.image.name = this.name + "-image";
     }
