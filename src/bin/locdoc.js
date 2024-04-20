@@ -61,13 +61,7 @@ try {
         runFlags += " --network " + manifest.deploy.network;
     }
 
-    const dockerRunArgs = [
-        '-d',
-        ...runFlags.split(' '),
-        '--name',
-        containerName,
-        manifest.image.name + ':' + manifest.image.version
-    ];
+    const dockerRunArgs = ['-d', ...runFlags.split(' '), '--name', containerName, manifest.image.name + ':' + manifest.image.version];
     await $`docker run ${dockerRunArgs}`;
 
     await $`docker builder prune -f`;
