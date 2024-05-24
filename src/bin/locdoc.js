@@ -16,7 +16,7 @@ try {
     const manifestParser = new ManifestParser(logger);
     const manifest = await manifestParser.parse(args.manifest); 
 
-    const workDir = await $`echo -n /tmp/$RANDOM`;
+    const workDir = Math.floor(Math.random() * 10000).toString();
 
     const artifactRepoDir = await $`echo -n ${workDir}/${manifest.image.name}`;
     await $`mkdir -p ${artifactRepoDir}`;

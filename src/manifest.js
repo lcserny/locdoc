@@ -10,7 +10,7 @@ export class ManifestParser {
         this.logger.info(`Parsing manifest '${manifestFilePath}'`);
 
         const manifestFile = await fs.readFile(manifestFilePath, "utf8");
-        const randomName = await $`echo -n $RANDOM`;
+        const randomName = Math.floor(Math.random() * 10000).toString();
         const template = new Manifest(randomName);
         const manifest = YAML.parse(manifestFile);
         const mergedManifest = { ...template, ...manifest };
