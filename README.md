@@ -29,7 +29,7 @@ artifact:
     buildCmd: "mvn clean build"
 config:
     repo: "git@github.com/lcserny/commander-config.git"
-    tag: "1.0.5_local"
+    tag: "master"
     destinationPath: "src/main/resources"
 image:
     name: "vm-commander"
