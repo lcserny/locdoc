@@ -16,7 +16,7 @@ try {
     const manifestParser = new ManifestParser(logger);
     const manifest = await manifestParser.parse(args.manifest); 
 
-    const workDir = Math.floor(Math.random() * 10000).toString();
+    const workDir = await $`echo -n /tmp/$RANDOM`;
 
     const artifactRepoDir = await $`echo -n ${workDir}/${manifest.image.name}`;
     await $`mkdir -p ${artifactRepoDir}`;
@@ -27,7 +27,7 @@ try {
     const tmpConfigRepoDir = await $`echo -n ${workDir}/$RANDOM`;
     await $`mkdir -p ${tmpConfigRepoDir}`;
     await $`cd ${tmpConfigRepoDir} && git clone --branch ${manifest.config.tag} ${manifest.config.repo} .`;
-    await $`mv ${tmpConfigRepoDir} ${configRepoDir}`;
+    await $`mv ${tmpConfigRepoDir}/* ${configRepoDir}`;
 
     await $`cd ${artifactRepoDir} && bash -c ${manifest.artifact.buildCmd}`;
 
