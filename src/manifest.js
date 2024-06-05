@@ -15,6 +15,7 @@ export class ManifestParser {
         const manifest = YAML.parse(manifestFile);
         const mergedManifest = { ...template, ...manifest };
         this.validate(mergedManifest);
+
         return mergedManifest;
     }
 
@@ -39,8 +40,8 @@ export class ManifestParser {
 
 export class Manifest {
     name;
-    artifact = { repo: null, tag: undefined, dockerFile: "Dockerfile", buildCmd: null };
-    config = { repo: null, tag: undefined, destinationPath: null };
+    artifact = { repo: null, tag: "master", dockerFile: "Dockerfile", buildCmd: null };
+    config = { repo: null, tag: "master", destinationPath: null };
     image = { name: "", version: "1.0" };
     deploy = { type: "container", name: "", network: undefined, runFlags: undefined };
 
