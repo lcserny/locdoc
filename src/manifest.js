@@ -1,5 +1,6 @@
 import * as fs from "fs/promises";
 import YAML from "yaml";
+import 'zx/globals'
 
 export class ManifestParser {
     constructor(logger) {
