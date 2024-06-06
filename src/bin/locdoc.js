@@ -91,6 +91,7 @@ try {
 
     await docker.command(`builder prune -f`);
 
+    logger.info(`Removing workdir '${workDir}'`);
     await fs.rm(workDir, {recursive: true});
 
     logger.info("Done!");
