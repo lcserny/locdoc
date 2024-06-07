@@ -18,7 +18,7 @@ export class ManifestParser {
         const mergedManifest = lodash.merge(template, manifest);
         this.validate(mergedManifest);
 
-        this.logger.info(`Manifest data: ${JSON.stringify(mergedManifest)}`);
+        this.logger.info(`Manifest data: ${JSON.stringify(mergedManifest, null, 2)}`);
 
         return mergedManifest;
     }
