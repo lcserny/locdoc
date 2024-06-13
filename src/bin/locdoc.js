@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
-import * as argparse from "argparse";
-import * as tracer from "tracer";
+import {program} from "commander";
+import * as winston from "winston";
 import {ManifestParser} from '../manifest.js';
 import * as path from "node:path";
 import * as os from "node:os";
@@ -11,16 +11,26 @@ import * as child_process from "node:child_process";
 import * as util from "node:util";
 import {Docker} from "docker-cli-js";
 
-const parser = new argparse.ArgumentParser({
-    description: "Local Docker Deployer"
-});
-parser.add_argument("-m", "--manifest", {required: true, help: "path to deployment manifest file"});
-const args = parser.parse_args();
+const { format, createLogger, transports } = winston.default;
+const { timestamp, combine, errors, prettyPrint } = format;
+
+program
+    .name("locdoc")
+    .description("CLI to deploy local docker containers")
+    .requiredOption("-m, --manifest <string>", "path to deployment manifest file");
+
+program.parse();
+
+const args = program.opts();
 
 const docker = new Docker({echo: false});
 const exec = util.promisify(child_process.exec);
 const git = simpleGit();
-const logger = tracer.colorConsole();
+const logger = createLogger({
+    level: "info",
+    format: combine(errors({stack: true}), timestamp(), prettyPrint()),
+    transports: [ new transports.Console() ]
+});
 
 try {
     const manifestParser = new ManifestParser(logger, getRandomNumberAsString(10000, 99999));
@@ -96,7 +106,7 @@ try {
 
     logger.info("Done!");
 } catch (e) {
-    logger.error(e);
+    logger.error(e.stack);
 }
 
 function getRandomNumberAsString(min, max) {
