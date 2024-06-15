@@ -3,7 +3,6 @@
     "version": "1.0.0",
     "description": "",
     "main": "src/main.js",
-    "type": "module",
     "scripts": {
         "test": "jest",
         "build": "babel src -d lib"
@@ -26,7 +25,7 @@
         "commander": "^12.1.0",
         "docker-cli-js": "^2.10.0",
         "fs-extra": "^11.2.0",
-        "lodash-es": "^4.17.21",
+        "lodash": "^4.17.21",
         "simple-git": "^3.24.0",
         "winston": "^3.13.0",
         "yaml": "^2.4.0"

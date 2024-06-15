@@ -1,15 +1,14 @@
-import {getRandomNumberAsString} from "./util.js";
-import * as path from "node:path";
-import * as fs from "node:fs/promises";
-import simpleGit from "simple-git";
-import util from "node:util";
-import child_process from "node:child_process";
-import {BaseManifest} from "./manifest.js";
+const path = require("node:path");
+const fs = require("node:fs/promises");
+const simpleGit = require("simple-git");
+const child_process = require("node:child_process");
+const util = require("node:util");
+const {getRandomNumberAsString, BaseManifest} = require("./lib");
 
 const git = simpleGit();
 const exec = util.promisify(child_process.exec);
 
-export class NodeCliDeployer {
+class NodeCliDeployer {
     constructor(workDir, manifest, logger) {
         this.workDir = workDir;
         this.manifest = manifest;
@@ -44,10 +43,10 @@ export class NodeCliDeployer {
     }
 }
 
-export class NodeCliManifest extends BaseManifest {
-    artifact = { repo: null, tag: "master", buildCmd: "npm test" };
-    config = { repo: null, tag: "master", destinationPath: null };
-    deploy = { type: "nodecli", binOut: null, bins: null };
+class NodeCliManifest extends BaseManifest {
+    artifact = {repo: null, tag: "master", buildCmd: "npm test"};
+    config = {repo: null, tag: "master", destinationPath: null};
+    deploy = {type: "nodecli", binOut: null, bins: null};
 
     constructor(randomName) {
         super(randomName);
@@ -74,4 +73,9 @@ export class NodeCliManifest extends BaseManifest {
             throw new Error("manifest provided has no `deploy.bins`");
         }
     }
+}
+
+module.exports = {
+    NodeCliManifest,
+    NodeCliDeployer
 }

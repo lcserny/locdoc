@@ -1,17 +1,15 @@
 #!/usr/bin/env node
 
-import {program} from "commander";
-import * as winston from "winston";
-import {ManifestParser} from '../manifest.js';
-import * as path from "node:path";
-import * as os from "node:os";
-import * as fs from "node:fs/promises";
-import {ContainerDeployer} from "../container.js";
-import {NodeCliDeployer} from "../nodecli.js";
-import {getRandomNumberAsString} from "../util.js";
+const {program} = require("commander")
+const {ManifestParser} = require("../manifest");
+const winston = require("winston");
+const path = require("node:path");
+const os = require("node:os");
+const fs = require("node:fs/promises");
+const {DeployRetriever} = require("../deploy");
+const {getRandomNumberAsString} = require("../lib");
 
-const {format, createLogger, transports} = winston.default;
-const {timestamp, combine, errors, prettyPrint} = format;
+const { combine, timestamp, prettyPrint, errors } = winston.format;
 
 program
     .name("locdoc")
@@ -22,36 +20,31 @@ program.parse();
 
 const args = program.opts();
 
-const logger = createLogger({
+const logger = winston.createLogger({
     level: "info",
     format: combine(errors({stack: true}), timestamp(), prettyPrint()),
-    transports: [new transports.Console()]
+    transports: [new winston.transports.Console()]
 });
 
-try {
-    const manifestParser = new ManifestParser(logger, getRandomNumberAsString(10000, 99999));
-    const manifest = await manifestParser.parse(args.manifest);
+async function main() {
+    try {
+        const manifestParser = new ManifestParser(logger, getRandomNumberAsString(10000, 99999));
+        const manifest = await manifestParser.parse(args.manifest);
 
-    const workDir = path.join(os.tmpdir(), getRandomNumberAsString(10000, 99999))
-    logger.info(`Creating workdir '${workDir}'`);
+        const workDir = path.join(os.tmpdir(), getRandomNumberAsString(10000, 99999))
+        logger.info(`Creating workdir '${workDir}'`);
 
-    // TODO: not ok here, should be switch used once
-    let deployer;
-    switch (manifest.deploy?.type) {
-        case "nodecli":
-            deployer = new NodeCliDeployer(workDir, manifest, logger);
-            break;
-        default:
-            deployer = new ContainerDeployer(workDir, manifest, logger);
-            break;
+        const deployRetriever = new DeployRetriever(manifest.deploy?.type, workDir, manifest, logger);
+        const deployer = deployRetriever.getDeployer();
+        await deployer.deploy();
+
+        logger.info(`Removing workdir '${workDir}'`);
+        await fs.rm(workDir, {recursive: true});
+
+        logger.info("Done!");
+    } catch (e) {
+        logger.error(e.stack);
     }
-
-    await deployer.deploy();
-
-    logger.info(`Removing workdir '${workDir}'`);
-    await fs.rm(workDir, {recursive: true});
-
-    logger.info("Done!");
-} catch (e) {
-    logger.error(e.stack);
 }
+
+main();

@@ -1,17 +1,16 @@
-import {getRandomNumberAsString} from "./util.js";
-import * as path from "node:path";
-import * as fs from "node:fs/promises";
-import {Docker} from "docker-cli-js";
-import simpleGit from "simple-git";
-import util from "node:util";
-import child_process from "node:child_process";
-import {BaseManifest} from "./manifest.js";
+const simpleGit = require("simple-git");
+const {Docker} = require("docker-cli-js");
+const child_process = require("node:child_process");
+const util = require("node:util");
+const path = require("node:path");
+const fs = require("node:fs/promises");
+const {getRandomNumberAsString, BaseManifest} = require("./lib");
 
 const docker = new Docker({echo: false});
 const git = simpleGit();
 const exec = util.promisify(child_process.exec);
 
-export class ContainerDeployer {
+class ContainerDeployer {
     constructor(workDir, manifest, logger) {
         this.workDir = workDir;
         this.manifest = manifest;
@@ -83,11 +82,11 @@ export class ContainerDeployer {
     }
 }
 
-export class ContainerManifest extends BaseManifest {
-    artifact = { repo: null, tag: "master", dockerFile: "Dockerfile", buildCmd: null };
-    config = { repo: null, tag: "master", destinationPath: null };
-    image = { name: "", version: "1.0" };
-    deploy = { type: "container", name: "", network: undefined, runFlags: undefined };
+class ContainerManifest extends BaseManifest {
+    artifact = {repo: null, tag: "master", dockerFile: "Dockerfile", buildCmd: null};
+    config = {repo: null, tag: "master", destinationPath: null};
+    image = {name: "", version: "1.0"};
+    deploy = {type: "container", name: "", network: undefined, runFlags: undefined};
 
     constructor(randomName) {
         super(randomName);
@@ -112,4 +111,9 @@ export class ContainerManifest extends BaseManifest {
             throw new Error("manifest provided has no `config.destinationPath`");
         }
     }
+}
+
+module.exports = {
+    ContainerManifest,
+    ContainerDeployer
 }

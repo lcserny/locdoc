@@ -1,21 +1,10 @@
-import * as fs from "node:fs/promises";
-import YAML from "yaml";
-import lodash from "lodash-es";
-import {NodeCliManifest} from "./nodecli.js";
-import {ContainerManifest} from "./container.js";
+const YAML = require("yaml");
+const fs = require("node:fs/promises");
+const {NodeCliManifest} = require("./nodecli");
+const {ContainerManifest} = require("./container");
+const lodash = require("lodash");
 
-// FIXME: Cannot access 'BaseManifest' before initialization, try commonJS requires?
-export class BaseManifest {
-    constructor(randomName) {
-        this.name = randomName
-    }
-
-    validate() {
-        throw new Error("not implemented");
-    }
-}
-
-export class ManifestParser {
+class ManifestParser {
     constructor(logger, randomName) {
         this.logger = logger;
         this.randomName = randomName;
@@ -46,3 +35,6 @@ export class ManifestParser {
     }
 }
 
+module.exports = {
+    ManifestParser
+}
