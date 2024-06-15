@@ -5,10 +5,12 @@ const child_process = require("node:child_process");
 const util = require("node:util");
 const {getRandomNumberAsString, BaseManifest} = require("./lib");
 
+const NODEJS_CLI = "nodejs-cli";
+
 const git = simpleGit();
 const exec = util.promisify(child_process.exec);
 
-class NodeCliDeployer {
+class NodeJSCliDeployer {
     constructor(workDir, manifest, logger) {
         this.workDir = workDir;
         this.manifest = manifest;
@@ -53,8 +55,6 @@ class NodeCliDeployer {
             }
             await fs.symlink(target, link);
         }
-
-        // TODO use runFlags??
     }
 
     async filExists(pathToCheck) {
@@ -67,10 +67,10 @@ class NodeCliDeployer {
     }
 }
 
-class NodeCliManifest extends BaseManifest {
+class NodeJSCliManifest extends BaseManifest {
     artifact = {repo: null, tag: "master", buildCmd: "npm install"};
     config = {repo: null, tag: "master", destinationPath: ""};
-    deploy = {type: "nodecli", name: "", binOut: null, bins: null, runFlags: undefined};
+    deploy = {type: NODEJS_CLI, name: "", binOut: null, bins: null};
 
     constructor(randomName) {
         super(randomName);
@@ -97,6 +97,7 @@ class NodeCliManifest extends BaseManifest {
 }
 
 module.exports = {
-    NodeCliManifest,
-    NodeCliDeployer
+    NodeJSCliManifest,
+    NodeJSCliDeployer,
+    NODEJS_CLI
 }

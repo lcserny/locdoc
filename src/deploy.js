@@ -1,4 +1,4 @@
-const {NodeCliDeployer} = require("./nodecli");
+const {NodeJSCliDeployer, NODEJS_CLI} = require("./nodejs-cli");
 const {ContainerDeployer} = require("./container");
 
 class DeployRetriever {
@@ -12,8 +12,8 @@ class DeployRetriever {
     getDeployer() {
         let deployer;
         switch (this.type) {
-            case "nodecli":
-                deployer = new NodeCliDeployer(this.workDir, this.manifest, this.logger);
+            case NODEJS_CLI:
+                deployer = new NodeJSCliDeployer(this.workDir, this.manifest, this.logger);
                 break;
             default:
                 deployer = new ContainerDeployer(this.workDir, this.manifest, this.logger);

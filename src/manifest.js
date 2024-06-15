@@ -1,6 +1,6 @@
 const YAML = require("yaml");
 const fs = require("node:fs/promises");
-const {NodeCliManifest} = require("./nodecli");
+const {NodeJSCliManifest, NODEJS_CLI} = require("./nodejs-cli");
 const {ContainerManifest} = require("./container");
 const lodash = require("lodash");
 
@@ -18,8 +18,8 @@ class ManifestParser {
 
         let template;
         switch (manifest.deploy.type) {
-            case "nodecli":
-                template = new NodeCliManifest(this.randomName);
+            case NODEJS_CLI:
+                template = new NodeJSCliManifest(this.randomName);
                 break;
             default:
                 template = new ContainerManifest(this.randomName);
