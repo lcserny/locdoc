@@ -1,6 +1,19 @@
 import * as fs from "node:fs/promises";
 import YAML from "yaml";
 import lodash from "lodash-es";
+import {NodeCliManifest} from "./nodecli.js";
+import {ContainerManifest} from "./container.js";
+
+// FIXME: Cannot access 'BaseManifest' before initialization, try commonJS requires?
+export class BaseManifest {
+    constructor(randomName) {
+        this.name = randomName
+    }
+
+    validate() {
+        throw new Error("not implemented");
+    }
+}
 
 export class ManifestParser {
     constructor(logger, randomName) {
@@ -12,46 +25,24 @@ export class ManifestParser {
         this.logger.info(`Parsing manifest '${manifestFilePath}'`);
 
         const manifestFile = await fs.readFile(manifestFilePath, "utf8");
-        const template = new Manifest(this.randomName);
         const manifest = YAML.parse(manifestFile);
 
+        let template;
+        switch (manifest.deploy.type) {
+            case "nodecli":
+                template = new NodeCliManifest(this.randomName);
+                break;
+            default:
+                template = new ContainerManifest(this.randomName);
+                break;
+        }
+
         const mergedManifest = lodash.merge(template, manifest);
-        this.validate(mergedManifest);
+        mergedManifest.validate();
 
         this.logger.info(`Manifest data: ${JSON.stringify(mergedManifest, null, 2)}`);
 
         return mergedManifest;
     }
-
-    validate(manifest) {
-        if (manifest.artifact?.repo == null) {
-            throw new Error("manifest provided has no `artifact.repo`");
-        }
-
-        if (manifest.artifact?.buildCmd == null) {
-            throw new Error("manifest provided has no `artifact.buildCmd`");
-        }
-
-        if (manifest.config?.repo == null) {
-            throw new Error("manifest provided has no `config.repo`");
-        }
-
-        if (manifest.config?.destinationPath == null) {
-            throw new Error("manifest provided has no `config.destinationPath`");
-        }
-    }
 }
 
-export class Manifest {
-    name;
-    artifact = { repo: null, tag: "master", dockerFile: "Dockerfile", buildCmd: null };
-    config = { repo: null, tag: "master", destinationPath: null };
-    image = { name: "", version: "1.0" };
-    deploy = { type: "container", name: "", network: undefined, runFlags: undefined };
-
-    constructor(randomName) {
-        this.name = randomName;
-        this.deploy.name = this.name;
-        this.image.name = this.name + "-image";
-    }
-}
