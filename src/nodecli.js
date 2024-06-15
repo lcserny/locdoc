@@ -15,10 +15,9 @@ class NodeCliDeployer {
         this.logger = logger;
     }
 
-    // TODO
     async deploy() {
         this.logger.info(`Cloning artifact repo`);
-        const artifactRepoDir = path.join(this.workDir, this.manifest.image.name);
+        const artifactRepoDir = path.join(this.workDir, this.manifest.deploy.name);
         await fs.mkdir(artifactRepoDir, {recursive: true});
         await git.clone(this.manifest.artifact.repo, artifactRepoDir, {"--branch": this.manifest.artifact.tag});
 
@@ -31,25 +30,38 @@ class NodeCliDeployer {
         await git.clone(this.manifest.config.repo, tmpConfigRepoDir, {"--branch": this.manifest.config.tag});
 
         this.logger.info("Merging config in artifact");
-        await fs.readdir(tmpConfigRepoDir).then(files => {
-            files.forEach((file) => {
-                fs.rename(path.join(tmpConfigRepoDir, file), path.join(configRepoDir, file));
-            });
-        });
+        await fs.cp(tmpConfigRepoDir, configRepoDir, {recursive: true});
+        await fs.rm(tmpConfigRepoDir, {recursive: true});
 
         this.logger.info("Executing build command");
         process.chdir(artifactRepoDir);
         await exec(`bash -c '${this.manifest.artifact.buildCmd}'`);
+
+        this.logger.info(`Moving cli to bin out: ${this.manifest.deploy.binOut}`);
+        const newArtifactPath = path.join(this.manifest.deploy.binOut, path.basename(artifactRepoDir));
+        try {
+            await fs.access(newArtifactPath);
+            await fs.rm(newArtifactPath, {recursive: true});
+        } catch (ignored) { }
+        await fs.rename(artifactRepoDir, newArtifactPath);
+
+        this.logger.info(`Creating symlinks: ${JSON.stringify(this.manifest.deploy.bins, null, 2)}`);
+        for (const [key, val] of Object.entries(this.manifest.deploy.bins)) {
+            await fs.symlink(path.join(newArtifactPath, val.toString()), path.join(this.manifest.deploy.binOut, key));
+        }
+
+        // TODO use runFlags??
     }
 }
 
 class NodeCliManifest extends BaseManifest {
-    artifact = {repo: null, tag: "master", buildCmd: "npm test"};
-    config = {repo: null, tag: "master", destinationPath: null};
-    deploy = {type: "nodecli", binOut: null, bins: null};
+    artifact = {repo: null, tag: "master", buildCmd: "npm install"};
+    config = {repo: null, tag: "master", destinationPath: ""};
+    deploy = {type: "nodecli", name: "", binOut: null, bins: null, runFlags: undefined};
 
     constructor(randomName) {
         super(randomName);
+        this.deploy.name = this.name;
     }
 
     validate() {
@@ -59,10 +71,6 @@ class NodeCliManifest extends BaseManifest {
 
         if (this.config?.repo == null) {
             throw new Error("manifest provided has no `config.repo`");
-        }
-
-        if (this.config?.destinationPath == null) {
-            throw new Error("manifest provided has no `config.destinationPath`");
         }
 
         if (this.deploy?.binOut == null) {

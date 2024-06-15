@@ -32,11 +32,8 @@ class ContainerDeployer {
         await git.clone(this.manifest.config.repo, tmpConfigRepoDir, {"--branch": this.manifest.config.tag});
 
         this.logger.info("Merging config in artifact");
-        await fs.readdir(tmpConfigRepoDir).then(files => {
-            files.forEach((file) => {
-                fs.rename(path.join(tmpConfigRepoDir, file), path.join(configRepoDir, file));
-            });
-        });
+        await fs.cp(tmpConfigRepoDir, configRepoDir, {recursive: true});
+        await fs.rm(tmpConfigRepoDir, {recursive: true});
 
         this.logger.info("Executing build command");
         process.chdir(artifactRepoDir);
