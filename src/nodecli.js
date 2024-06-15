@@ -39,18 +39,31 @@ class NodeCliDeployer {
 
         this.logger.info(`Moving cli to bin out: ${this.manifest.deploy.binOut}`);
         const newArtifactPath = path.join(this.manifest.deploy.binOut, path.basename(artifactRepoDir));
-        try {
-            await fs.access(newArtifactPath);
+        if (await this.filExists(newArtifactPath)) {
             await fs.rm(newArtifactPath, {recursive: true});
-        } catch (ignored) { }
+        }
         await fs.rename(artifactRepoDir, newArtifactPath);
 
         this.logger.info(`Creating symlinks: ${JSON.stringify(this.manifest.deploy.bins, null, 2)}`);
         for (const [key, val] of Object.entries(this.manifest.deploy.bins)) {
-            await fs.symlink(path.join(newArtifactPath, val.toString()), path.join(this.manifest.deploy.binOut, key));
+            const target = path.join(newArtifactPath, val.toString());
+            const link = path.join(this.manifest.deploy.binOut, key);
+            if (await this.filExists(link)) {
+                await fs.rm(link);
+            }
+            await fs.symlink(target, link);
         }
 
         // TODO use runFlags??
+    }
+
+    async filExists(pathToCheck) {
+        try {
+            await fs.access(pathToCheck);
+            return true;
+        } catch (ignored) {
+            return false;
+        }
     }
 }
 
