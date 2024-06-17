@@ -9,12 +9,13 @@ const fs = require("node:fs/promises");
 const {DeployRetriever} = require("../deploy");
 const {getRandomNumberAsString} = require("../lib");
 
-const { combine, timestamp, prettyPrint, errors } = winston.format;
+const { combine, timestamp, prettyPrint, printf, errors } = winston.format;
 
 program
     .name("locdoc")
     .description("CLI to deploy local containers")
-    .requiredOption("-m, --manifest <string>", "path to deployment manifest file");
+    .requiredOption("-m, --manifest <string>", "path to deployment manifest file")
+    .option("-j, --json", "use JSON logging format");
 
 program.parse();
 
@@ -22,7 +23,12 @@ const args = program.opts();
 
 const logger = winston.createLogger({
     level: "info",
-    format: combine(errors({stack: true}), timestamp(), prettyPrint()),
+    format: combine(errors({stack: true}), timestamp(), args.json
+        ? prettyPrint()
+        : printf(({timestamp, level, message, stack}) => {
+            const text = `${timestamp} ${level.toUpperCase()} ${message}`;
+            return stack ? text + '\n' + stack : text;
+        })),
     transports: [new winston.transports.Console()]
 });
 
