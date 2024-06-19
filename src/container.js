@@ -75,7 +75,7 @@ class ContainerDeployer {
         this.logger.info(`Starting new docker container '${dockerContainer}'`);
         await docker.command(`run -d ${runFlags} --name ${dockerContainer} ${dockerImage}`);
 
-        await docker.command(`builder prune -f`);
+        await docker.command(`image prune -f`);
     }
 }
 
