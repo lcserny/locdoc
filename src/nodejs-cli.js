@@ -1,43 +1,18 @@
 const path = require("node:path");
 const fs = require("node:fs/promises");
-const simpleGit = require("simple-git");
-const child_process = require("node:child_process");
-const util = require("node:util");
-const {getRandomNumberAsString, BaseManifest} = require("./lib");
+const {BaseManifest, BaseDeployer} = require("./lib");
 
 const NODEJS_CLI = "nodejs-cli";
 
-const git = simpleGit();
-const exec = util.promisify(child_process.exec);
-
-class NodeJSCliDeployer {
+class NodeJSCliDeployer extends BaseDeployer{
     constructor(workDir, manifest, logger) {
-        this.workDir = workDir;
-        this.manifest = manifest;
-        this.logger = logger;
+        super(logger, workDir, manifest);
     }
 
     async deploy() {
-        this.logger.info(`Cloning artifact repo`);
-        const artifactRepoDir = path.join(this.workDir, this.manifest.deploy.name);
-        await fs.mkdir(artifactRepoDir, {recursive: true});
-        await git.clone(this.manifest.artifact.repo, artifactRepoDir, {"--branch": this.manifest.artifact.tag});
-
-        const configRepoDir = path.join(artifactRepoDir, this.manifest.config.destinationPath);
-        await fs.mkdir(configRepoDir, {recursive: true});
-
-        this.logger.info("Cloning config repo");
-        const tmpConfigRepoDir = path.join(this.workDir, getRandomNumberAsString(10000, 99999));
-        await fs.mkdir(tmpConfigRepoDir, {recursive: true});
-        await git.clone(this.manifest.config.repo, tmpConfigRepoDir, {"--branch": this.manifest.config.tag});
-
-        this.logger.info("Merging config in artifact");
-        await fs.cp(tmpConfigRepoDir, configRepoDir, {recursive: true});
-        await fs.rm(tmpConfigRepoDir, {recursive: true});
-
-        this.logger.info("Executing build command");
-        process.chdir(artifactRepoDir);
-        await exec(`bash -c '${this.manifest.artifact.buildCmd}'`);
+        const artifactRepoDir = await this.cloneArtifactRepo();
+        await this.cloneConfigRepo(artifactRepoDir);
+        await this.executeBuildCommand(artifactRepoDir);
 
         this.logger.info(`Moving cli to bin out: ${this.manifest.deploy.binOut}`);
         const newArtifactPath = path.join(this.manifest.deploy.binOut, path.basename(artifactRepoDir));

@@ -1,44 +1,19 @@
-const simpleGit = require("simple-git");
 const {Docker} = require("docker-cli-js");
-const child_process = require("node:child_process");
-const util = require("node:util");
 const path = require("node:path");
-const fs = require("node:fs/promises");
-const {getRandomNumberAsString, BaseManifest} = require("./lib");
+const {BaseManifest, BaseDeployer} = require("./lib");
 
 const docker = new Docker({echo: false});
-const git = simpleGit();
-const exec = util.promisify(child_process.exec);
 
-class ContainerDeployer {
+class ContainerDeployer extends BaseDeployer {
     constructor(workDir, manifest, logger) {
-        this.workDir = workDir;
-        this.manifest = manifest;
-        this.logger = logger;
+        super(logger, workDir, manifest);
     }
 
     async deploy() {
-        this.logger.info(`Cloning artifact repo`);
-        const artifactRepoDir = path.join(this.workDir, this.manifest.image.name);
-        await fs.mkdir(artifactRepoDir, {recursive: true});
-        await git.clone(this.manifest.artifact.repo, artifactRepoDir, {"--branch": this.manifest.artifact.tag});
-
-        const configRepoDir = path.join(artifactRepoDir, this.manifest.config.destinationPath);
-        await fs.mkdir(configRepoDir, {recursive: true});
-
-        this.logger.info("Cloning config repo");
-        const tmpConfigRepoDir = path.join(this.workDir, getRandomNumberAsString(10000, 99999));
-        await fs.mkdir(tmpConfigRepoDir, {recursive: true});
-        await git.clone(this.manifest.config.repo, tmpConfigRepoDir, {"--branch": this.manifest.config.tag});
-
-        this.logger.info("Merging config in artifact");
-        await fs.cp(tmpConfigRepoDir, configRepoDir, {recursive: true});
-        await fs.rm(tmpConfigRepoDir, {recursive: true});
-
+        const artifactRepoDir = await this.cloneArtifactRepo();
+        await this.cloneConfigRepo(artifactRepoDir);
         if (this.manifest.artifact.buildCmd) {
-            this.logger.info("Executing build command");
-            process.chdir(artifactRepoDir);
-            await exec(`bash -c '${this.manifest.artifact.buildCmd}'`);
+            await this.executeBuildCommand(artifactRepoDir);
         }
 
         this.logger.info("Building Docker image");
