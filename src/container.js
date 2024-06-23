@@ -35,9 +35,11 @@ class ContainerDeployer {
         await fs.cp(tmpConfigRepoDir, configRepoDir, {recursive: true});
         await fs.rm(tmpConfigRepoDir, {recursive: true});
 
-        this.logger.info("Executing build command");
-        process.chdir(artifactRepoDir);
-        await exec(`bash -c '${this.manifest.artifact.buildCmd}'`);
+        if (this.manifest.artifact.buildCmd) {
+            this.logger.info("Executing build command");
+            process.chdir(artifactRepoDir);
+            await exec(`bash -c '${this.manifest.artifact.buildCmd}'`);
+        }
 
         this.logger.info("Building Docker image");
         const dockerImage = `${this.manifest.image.name}:${this.manifest.image.version}`;
@@ -94,10 +96,6 @@ class ContainerManifest extends BaseManifest {
     validate() {
         if (this.artifact?.repo == null) {
             throw new Error("manifest provided has no `artifact.repo`");
-        }
-
-        if (this.artifact?.buildCmd == null) {
-            throw new Error("manifest provided has no `artifact.buildCmd`");
         }
 
         if (this.config?.repo == null) {
