@@ -4,7 +4,6 @@ const simpleGit = require("simple-git");
 const util = require("node:util");
 const child_process = require("node:child_process");
 
-const git = simpleGit();
 const exec = util.promisify(child_process.exec);
 
 function getRandomNumberAsString(min, max) {
@@ -22,17 +21,18 @@ class BaseManifest {
 }
 
 class BaseDeployer {
-    constructor(logger, workDir, manifest) {
+    constructor(logger, workDir, manifest, git) {
         this.logger = logger;
         this.workDir = workDir;
         this.manifest = manifest;
+        this.git = git || simpleGit();
     }
 
     async cloneArtifactRepo() {
         this.logger.info(`Cloning artifact repo`);
         const artifactRepoDir = path.join(this.workDir, this.manifest.deploy.name);
         await fs.mkdir(artifactRepoDir, {recursive: true});
-        await git.clone(this.manifest.artifact.repo, artifactRepoDir, {"--branch": this.manifest.artifact.tag});
+        await this.git.clone(this.manifest.artifact.repo, artifactRepoDir, {"--branch": this.manifest.artifact.tag});
 
         return artifactRepoDir;
     }
@@ -44,7 +44,7 @@ class BaseDeployer {
         this.logger.info("Cloning config repo");
         const tmpConfigRepoDir = path.join(this.workDir, getRandomNumberAsString(10000, 99999));
         await fs.mkdir(tmpConfigRepoDir, {recursive: true});
-        await git.clone(this.manifest.config.repo, tmpConfigRepoDir, {"--branch": this.manifest.config.tag});
+        await this.git.clone(this.manifest.config.repo, tmpConfigRepoDir, {"--branch": this.manifest.config.tag});
 
         this.logger.info("Merging config in artifact");
         await fs.cp(tmpConfigRepoDir, configRepoDir, {recursive: true});

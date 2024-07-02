@@ -17,7 +17,7 @@ class ManifestParser {
         const manifest = YAML.parse(manifestFile);
 
         let template;
-        switch (manifest.deploy.type) {
+        switch (manifest.deploy?.type) {
             case NODEJS_CLI:
                 template = new NodeJSCliManifest(this.randomName);
                 break;
