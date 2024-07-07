@@ -2,11 +2,12 @@ const {Docker} = require("docker-cli-js");
 const path = require("node:path");
 const {BaseManifest, BaseDeployer} = require("./lib");
 
-const docker = new Docker({echo: false});
+const CONTAINER = "container";
 
 class ContainerDeployer extends BaseDeployer {
-    constructor(workDir, manifest, logger) {
-        super(logger, workDir, manifest);
+    constructor(workDir, manifest, logger, docker, git) {
+        super(logger, workDir, manifest, git);
+        this.docker = docker || new Docker({echo: false});
     }
 
     async deploy() {
@@ -15,23 +16,37 @@ class ContainerDeployer extends BaseDeployer {
         if (this.manifest.artifact.buildCmd) {
             await this.executeBuildCommand(artifactRepoDir);
         }
-
-        this.logger.info("Building Docker image");
-        const dockerImage = `${this.manifest.image.name}:${this.manifest.image.version}`;
-        const dockerFilePath = path.join(artifactRepoDir, this.manifest.artifact.dockerFile);
-        await docker.command(`build -t ${dockerImage} -f ${dockerFilePath} ${artifactRepoDir}`);
-
-        const dockerNet = this.manifest.deploy.network;
-        if (dockerNet) {
-            const networksResp = await docker.command(`network ls --filter name=${dockerNet}`);
-            if (networksResp.network.length === 0) {
-                this.logger.info(`Docker network '${dockerNet}' not found, creating...`);
-                await docker.command(`network create ${dockerNet}`);
-            }
-        }
+        const dockerImage = await this.buildImage(artifactRepoDir);
+        const dockerNet = await this.createNetwork();
 
         const dockerContainer = this.manifest.deploy.name;
-        const containersResp = await docker.command(`ps -a --filter name=${dockerContainer}`);
+        await this.cleanExistingContainer(dockerContainer);
+
+        let runFlags = this.ensureNetwork(dockerNet);
+        await this.createContainer(dockerContainer, runFlags, dockerImage);
+
+        await this.cleanupBuild();
+    }
+
+    async cleanupBuild() {
+        await this.docker.command(`image prune -f`);
+    }
+
+    async createContainer(dockerContainer, runFlags, dockerImage) {
+        this.logger.info(`Starting new docker container '${dockerContainer}'`);
+        await this.docker.command(`run -d ${runFlags} --name ${dockerContainer} ${dockerImage}`);
+    }
+
+    ensureNetwork(dockerNet) {
+        let runFlags = this.manifest.deploy.runFlags;
+        if (!runFlags.includes("--network")) {
+            runFlags += ` --network ${dockerNet}`;
+        }
+        return runFlags;
+    }
+
+    async cleanExistingContainer(dockerContainer) {
+        const containersResp = await this.docker.command(`ps -a --filter name=${dockerContainer}`);
         if (containersResp.containerList.length > 0) {
             const container = containersResp.containerList[0];
             const containerId = container["container id"];
@@ -39,20 +54,31 @@ class ContainerDeployer extends BaseDeployer {
             const containerStatus = container.status;
             if (containerStatus.toLowerCase().includes("up")) {
                 this.logger.info(`Stopping container '${dockerContainer}'`);
-                await docker.command(`stop ${dockerContainer}`);
+                await this.docker.command(`stop ${dockerContainer}`);
             }
             this.logger.info(`Removing existing container '${dockerContainer}'`);
-            await docker.command(`rm -v ${dockerContainer}`);
+            await this.docker.command(`rm -v ${dockerContainer}`);
         }
+    }
 
-        let runFlags = this.manifest.deploy.runFlags;
-        if (!runFlags.includes("--network")) {
-            runFlags += ` --network ${dockerNet}`;
+    async createNetwork() {
+        const dockerNet = this.manifest.deploy.network;
+        if (dockerNet) {
+            const networksResp = await this.docker.command(`network ls --filter name=${dockerNet}`);
+            if (networksResp.network.length === 0) {
+                this.logger.info(`Docker network '${dockerNet}' not found, creating...`);
+                await this.docker.command(`network create ${dockerNet}`);
+            }
         }
-        this.logger.info(`Starting new docker container '${dockerContainer}'`);
-        await docker.command(`run -d ${runFlags} --name ${dockerContainer} ${dockerImage}`);
+        return dockerNet;
+    }
 
-        await docker.command(`image prune -f`);
+    async buildImage(artifactRepoDir) {
+        this.logger.info("Building Docker image");
+        const dockerImage = `${this.manifest.image.name}:${this.manifest.image.version}`;
+        const dockerFilePath = path.join(artifactRepoDir, this.manifest.artifact.dockerFile);
+        await this.docker.command(`build -t ${dockerImage} -f ${dockerFilePath} ${artifactRepoDir}`);
+        return dockerImage;
     }
 }
 
@@ -85,5 +111,6 @@ class ContainerManifest extends BaseManifest {
 
 module.exports = {
     ContainerManifest,
-    ContainerDeployer
+    ContainerDeployer,
+    CONTAINER
 }

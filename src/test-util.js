@@ -6,38 +6,30 @@ const { combine, timestamp, prettyPrint, errors } = winston.format;
 
 tmp.setGracefulCleanup();
 
-const cleanups = [];
-
 const logger = winston.createLogger({
     format: combine(errors({stack: true}), timestamp(), prettyPrint()),
     transports: [new winston.transports.Console()]
 });
 
-async function createTmpFile(contents) {
-    const f = await tmp.file();
-    await fs.writeFile(f.path, contents);
-    cleanups.push(f.cleanup);
-    return f;
-}
-
-async function createTmpDir(filesMap) {
+async function createFiles(dir, filesMap) {
     filesMap = filesMap || new Map();
-    const d = await tmp.dir({unsafeCleanup: true});
     for (let [fileName, contents] of filesMap) {
-        const fullPath = path.join(d.path, fileName);
+        const fullPath = path.join(dir, fileName);
         await fs.writeFile(fullPath, contents);
     }
-    cleanups.push(d.cleanup);
-    return d;
 }
 
-function cleanupTmp() {
-    cleanups.forEach((c) => c());
+function createFakeGit() {
+    return { clone: jest.fn().mockImplementation(() => { }) };
+}
+
+function createFakeDocker() {
+    return { command: jest.fn().mockImplementation(() => { }) };
 }
 
 module.exports = {
     logger,
-    createTmpFile,
-    createTmpDir,
-    cleanupTmp
+    createFakeGit,
+    createFakeDocker,
+    createFiles
 };

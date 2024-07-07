@@ -55,8 +55,7 @@ class BaseDeployer {
 
     async executeBuildCommand(artifactRepoDir) {
         this.logger.info("Executing build command");
-        process.chdir(artifactRepoDir);
-        await exec(`bash -c '${this.manifest.artifact.buildCmd}'`);
+        await exec(`bash -c 'cd ${artifactRepoDir} && ${this.manifest.artifact.buildCmd}'`);
     }
 }
 
