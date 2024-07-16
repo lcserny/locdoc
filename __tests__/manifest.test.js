@@ -65,4 +65,41 @@ config:
             expect(manifest.deploy.bins.two).toBe("src/two.js");
         });
     });
+
+    test("using minimal systemd yaml, parse should give back correct manifest", async () => {
+        const minimalSystemDManifest = `
+deploy:
+    type: systemd
+    cmdPrefix: "prefix"
+    path: "outPath"
+    preRunFlags: "-Dmy.flag=hi"
+    postRunFlags: "-Dmy.other.flag=hello"
+artifact:
+    repo: "systemdGitRepo"
+    buildCmd: "build!"
+    buildExecutable: "out/app.js"
+config:
+    repo: "configSystemdGitRepo"
+    destinationPath: "aPath"
+`.trim();
+
+        await tmp.withFile(async (f) => {
+            await fs.writeFile(f.path, minimalSystemDManifest);
+            const manifest = await parser.parse(f.path);
+
+            expect(manifest.artifact.repo).toBe("systemdGitRepo");
+            expect(manifest.artifact.tag).toBe("master");
+            expect(manifest.artifact.buildCmd).toBe("build!");
+            expect(manifest.artifact.buildExecutable).toBe("out/app.js");
+            expect(manifest.config.repo).toBe("configSystemdGitRepo");
+            expect(manifest.config.tag).toBe("master");
+            expect(manifest.config.destinationPath).toBe("aPath");
+            expect(manifest.deploy.type).toBe("systemd");
+            expect(manifest.deploy.cmdPrefix).toBe("prefix");
+            expect(manifest.deploy.name).toBe("someName");
+            expect(manifest.deploy.path).toBe("outPath");
+            expect(manifest.deploy.preRunFlags).toBe("-Dmy.flag=hi");
+            expect(manifest.deploy.postRunFlags).toBe("-Dmy.other.flag=hello");
+        });
+    });
 });

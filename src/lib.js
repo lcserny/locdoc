@@ -62,5 +62,6 @@ class BaseDeployer {
 module.exports = {
     getRandomNumberAsString,
     BaseManifest,
-    BaseDeployer
+    BaseDeployer,
+    exec
 }

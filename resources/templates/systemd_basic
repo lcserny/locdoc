@@ -1,0 +1,14 @@
+[Unit]
+Description=<NAME>
+StartLimitBurst=10
+StartLimitIntervalSec=50
+
+[Service]
+Type=simple
+StandardOutput=journal
+ExecStart=/bin/sh -c "<EXE>"
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

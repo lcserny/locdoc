@@ -6,6 +6,7 @@ const {BaseDeployer} = require("../src/lib");
 const path = require("node:path");
 const fse = require("fs-extra");
 const tmp = require("tmp-promise");
+const {SYSTEMD, SystemDDeployer} = require("../src/systemd");
 
 describe("deployRetriever", () => {
     test("retriever produces container deployer", async () => {
@@ -20,6 +21,13 @@ describe("deployRetriever", () => {
         const deployer = retriever.getDeployer();
 
         expect(deployer instanceof NodeJSCliDeployer).toBeTruthy();
+    });
+
+    test("retriever produces systemd deployer", async () => {
+        const retriever = new DeployRetriever(SYSTEMD, "", null, logger);
+        const deployer = retriever.getDeployer();
+
+        expect(deployer instanceof SystemDDeployer).toBeTruthy();
     });
 
     test("base deployer can clone artifact", async () => {

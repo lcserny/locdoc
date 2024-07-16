@@ -3,6 +3,7 @@ const fs = require("node:fs/promises");
 const {NodeJSCliManifest, NODEJS_CLI} = require("./nodejs-cli");
 const {ContainerManifest} = require("./container");
 const lodash = require("lodash");
+const {SYSTEMD, SystemDManifest} = require("./systemd");
 
 class ManifestParser {
     constructor(logger, randomName) {
@@ -20,6 +21,9 @@ class ManifestParser {
         switch (manifest.deploy?.type) {
             case NODEJS_CLI:
                 template = new NodeJSCliManifest(this.randomName);
+                break;
+            case SYSTEMD:
+                template = new SystemDManifest(this.randomName);
                 break;
             default:
                 template = new ContainerManifest(this.randomName);

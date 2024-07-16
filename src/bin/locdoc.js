@@ -34,6 +34,11 @@ const logger = winston.createLogger({
 
 async function main() {
     try {
+        if (os.platform() === 'win32') {
+            logger.error("Windows is not supported");
+            return;
+        }
+
         const manifestParser = new ManifestParser(logger, getRandomNumberAsString(10000, 99999));
         const manifest = await manifestParser.parse(args.manifest);
 
