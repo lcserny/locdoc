@@ -23,10 +23,19 @@ class NodeJSCliDeployer extends BaseDeployer{
         for (const [key, val] of Object.entries(this.manifest.deploy.bins)) {
             const target = path.join(newArtifactPath, val.toString());
             const link = path.join(this.manifest.deploy.binOut, key);
-            if (await fse.pathExists(link)) {
+            if (await this.symlinkExists(link)) {
                 await fs.rm(link);
             }
             await fs.symlink(target, link);
+        }
+    }
+
+    async symlinkExists(symlinkPath) {
+        try {
+            await fs.lstat(symlinkPath);
+            return true;
+        } catch (e) {
+            return false;
         }
     }
 
