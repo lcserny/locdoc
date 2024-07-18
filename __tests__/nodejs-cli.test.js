@@ -45,8 +45,8 @@ describe("nodejs-cli deployer", () => {
             await fs.rm(path.join(binOut, "firstCmd"));
             await fs.rm(path.join(binOut, "secondCmd"));
 
-            await fs.symlink(path.join(newArtifactPath, "one.js"), path.join(binOut, "firstCmd"));
-            await fs.symlink(path.join(newArtifactPath, "two.js"), path.join(binOut, "secondCmd"));
+            await fs.symlink(path.join(newArtifactPath, "one.js_wrong"), path.join(binOut, "firstCmd"));
+            await fs.symlink(path.join(newArtifactPath, "two.js_wrong"), path.join(binOut, "secondCmd"));
 
             await deployer.createSymlink(newArtifactPath);
 
