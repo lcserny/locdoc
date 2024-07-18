@@ -6,9 +6,10 @@ const { combine, timestamp, prettyPrint, errors } = winston.format;
 
 tmp.setGracefulCleanup();
 
-const logger = winston.createLogger({
+const noOpLogger = winston.createLogger({
     format: combine(errors({stack: true}), timestamp(), prettyPrint()),
-    transports: [new winston.transports.Console()]
+    transports: [new winston.transports.Console()],
+    level: "none"
 });
 
 async function createFiles(dir, filesMap) {
@@ -28,7 +29,7 @@ function createFakeDocker() {
 }
 
 module.exports = {
-    logger,
+    logger: noOpLogger,
     createFakeGit,
     createFakeDocker,
     createFiles
