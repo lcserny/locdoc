@@ -1,6 +1,6 @@
 const path = require("node:path");
 const fs = require("node:fs/promises");
-const {BaseManifest, BaseDeployer} = require("./lib");
+const {BaseManifest, BaseDeployer, symlinkExists} = require("./lib");
 const fse = require("fs-extra");
 
 const NODEJS_CLI = "nodejs-cli";
@@ -23,19 +23,10 @@ class NodeJSCliDeployer extends BaseDeployer{
         for (const [key, val] of Object.entries(this.manifest.deploy.bins)) {
             const target = path.join(newArtifactPath, val.toString());
             const link = path.join(this.manifest.deploy.binOut, key);
-            if (await this.symlinkExists(link)) {
+            if (await symlinkExists(link)) {
                 await fs.rm(link);
             }
             await fs.symlink(target, link);
-        }
-    }
-
-    async symlinkExists(symlinkPath) {
-        try {
-            await fs.lstat(symlinkPath);
-            return true;
-        } catch (e) {
-            return false;
         }
     }
 

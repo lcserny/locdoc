@@ -34,6 +34,20 @@ describe("nodejs-cli deployer", () => {
             await fs.writeFile(path.join(newArtifactPath, "one.js"), "");
             await fs.writeFile(path.join(newArtifactPath, "two.js"), "");
 
+            expect(await fse.pathExists(path.join(binOut, "firstCmd"))).toBeFalsy()
+            expect(await fse.pathExists(path.join(binOut, "secondCmd"))).toBeFalsy();
+
+            await deployer.createSymlink(newArtifactPath);
+
+            expect(await fse.pathExists(path.join(binOut, "firstCmd"))).toBeTruthy();
+            expect(await fse.pathExists(path.join(binOut, "secondCmd"))).toBeTruthy();
+
+            await fs.rm(path.join(binOut, "firstCmd"));
+            await fs.rm(path.join(binOut, "secondCmd"));
+
+            await fs.symlink(path.join(newArtifactPath, "one.js"), path.join(binOut, "firstCmd"));
+            await fs.symlink(path.join(newArtifactPath, "two.js"), path.join(binOut, "secondCmd"));
+
             await deployer.createSymlink(newArtifactPath);
 
             expect(await fse.pathExists(path.join(binOut, "firstCmd"))).toBeTruthy();

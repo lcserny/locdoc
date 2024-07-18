@@ -10,6 +10,15 @@ function getRandomNumberAsString(min, max) {
     return Math.floor(Math.random() * (max - min) + min).toString();
 }
 
+async function symlinkExists(symlinkPath) {
+    try {
+        await fs.lstat(symlinkPath);
+        return true;
+    } catch (e) {
+        return false;
+    }
+}
+
 class BaseManifest {
     constructor(randomName) {
         this.name = randomName
@@ -61,6 +70,7 @@ class BaseDeployer {
 
 module.exports = {
     getRandomNumberAsString,
+    symlinkExists,
     BaseManifest,
     BaseDeployer,
     exec
