@@ -28,6 +28,25 @@ export type Manifest = NodeJSCliManifest | SystemDManifest | ContainerManifest;
 
 export type Deployer = NodeJSCliDeployer | SystemDDeployer | ContainerDeployer;
 
+export interface Git {
+    // eslint-disable-next-line no-unused-vars
+    clone(repo: string, path: string, branch?: string): Promise<void>;
+}
+
+class DefaultGit implements Git {
+    private git: SimpleGit = simpleGit();
+
+    async clone(repo: string, path: string, branch?: string) {
+        const options = branch ? {"--branch": branch} : undefined;
+        await this.git.clone(repo, path, options);
+    }
+}
+
+export interface DockerWrapper {
+    // eslint-disable-next-line no-unused-vars
+    command(cmd: string): Promise<any>;
+}
+
 export class BaseManifest {
     protected name: string;
     
@@ -45,20 +64,20 @@ export class BaseDeployer {
     protected readonly manifest: Manifest
     protected logger: Logger;
     protected readonly workDir: string;
-    protected git: SimpleGit;
+    protected git: Git;
     
-    constructor(logger: Logger, workDir: string, manifest: Manifest, git?: SimpleGit) {
+    constructor(logger: Logger, workDir: string, manifest: Manifest, git: Git = new DefaultGit()) {
         this.logger = logger;
         this.workDir = workDir;
         this.manifest = manifest;
-        this.git = git || simpleGit();
+        this.git = git;
     }
 
     async cloneArtifactRepo() {
         this.logger.info(`Cloning artifact repo`);
         const artifactRepoDir = path.join(this.workDir, this.manifest.deploy.name);
         await fs.mkdir(artifactRepoDir, {recursive: true});
-        await this.git.clone(this.manifest.artifact.repo, artifactRepoDir, {"--branch": this.manifest.artifact.tag});
+        await this.git.clone(this.manifest.artifact.repo, artifactRepoDir, this.manifest.artifact.tag);
 
         return artifactRepoDir;
     }
@@ -70,7 +89,7 @@ export class BaseDeployer {
         this.logger.info("Cloning config repo");
         const tmpConfigRepoDir = path.join(this.workDir, getRandomNumberAsString(10000, 99999));
         await fs.mkdir(tmpConfigRepoDir, {recursive: true});
-        await this.git.clone(this.manifest.config.repo, tmpConfigRepoDir, {"--branch": this.manifest.config.tag});
+        await this.git.clone(this.manifest.config.repo, tmpConfigRepoDir, this.manifest.config.tag);
 
         this.logger.info("Merging config in artifact");
         await fs.cp(tmpConfigRepoDir, configRepoDir, {recursive: true});

@@ -1,17 +1,16 @@
 import path from "node:path";
 import fs from "node:fs/promises";
-import type { Manifest} from "./lib";
+import type {Git, Manifest} from "./lib";
 import {BaseDeployer, BaseManifest, symlinkExists} from "./lib";
 import fse from "fs-extra";
 import type {Logger} from "winston";
-import type {SimpleGit} from "simple-git";
 
 export const NODEJS_CLI = "nodejs-cli";
 
 export class NodeJSCliDeployer extends BaseDeployer{
     protected manifest: NodeJSCliManifest;
 
-    constructor(workDir: string, manifest: Manifest, logger: Logger, git?: SimpleGit) {
+    constructor(workDir: string, manifest: Manifest, logger: Logger, git?: Git) {
         super(logger, workDir, manifest, git);
         this.manifest = manifest as NodeJSCliManifest;
     }
@@ -50,7 +49,7 @@ export class NodeJSCliDeployer extends BaseDeployer{
 export class NodeJSCliManifest extends BaseManifest {
     artifact = {repo: "", tag: "master", buildCmd: "npm install"};
     config = {repo: "", tag: "master", destinationPath: ""};
-    deploy = {type: NODEJS_CLI, name: "", binOut: "", bins: Map<string, string>};
+    deploy = {type: NODEJS_CLI, name: "", binOut: "", bins: Object};
 
     constructor(randomName: string) {
         super(randomName);

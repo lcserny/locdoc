@@ -1,9 +1,10 @@
-const {logger, createFakeGit} = require("../src/test-util");
-const tmp = require("tmp-promise");
-const path = require("node:path");
-const fs = require("node:fs/promises");
-const {SystemDDeployer} = require("../src/systemd");
-const fse = require("fs-extra");
+import {createFakeGit, logger} from "../src/test-util";
+import tmp from "tmp-promise";
+import path from "node:path";
+import fs from "node:fs/promises";
+import {SystemDDeployer} from "../src/systemd";
+import fse from "fs-extra";
+import type {Manifest} from "../src/lib";
 
 describe("systemD deployer", () => {
     test("deployer deploys correctly", async () => {
@@ -28,7 +29,7 @@ describe("systemD deployer", () => {
                 }
             };
 
-            const deployer = new SystemDDeployer(d.path, manifest, logger, createFakeGit());
+            const deployer = new SystemDDeployer(d.path, manifest as Manifest, logger, createFakeGit());
 
             const serviceName = `${manifest.deploy.name}.service`;
             await fs.writeFile(path.join(d.path, "app.js"), "data here", "utf8");

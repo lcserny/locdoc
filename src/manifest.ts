@@ -5,7 +5,7 @@ import {ContainerManifest} from "./container";
 import lodash from "lodash";
 import {SYSTEMD, SystemDManifest} from "./systemd";
 import type {Logger} from "winston";
-import {Manifest} from "./lib";
+import type {Manifest} from "./lib";
 
 export class ManifestParser {
     private logger: Logger;

@@ -1,20 +1,27 @@
 import {Docker} from "docker-cli-js";
 import path from "node:path";
-import type { Manifest} from "./lib";
+import type {DockerWrapper, Git, Manifest} from "./lib";
 import {BaseDeployer, BaseManifest} from "./lib";
 import type {Logger} from "winston";
-import type {SimpleGit} from "simple-git";
 
 export const CONTAINER = "container";
 
+class DefaultDocker implements DockerWrapper {
+    private docker: Docker = new Docker({echo: false});
+
+    async command(cmd: string) {
+        return this.docker.command(cmd);
+    }
+}
+
 export class ContainerDeployer extends BaseDeployer {
-    private docker: Docker;
+    private docker: DockerWrapper;
     protected manifest: ContainerManifest;
     
-    constructor(workDir: string, manifest: Manifest, logger: Logger, docker?: Docker, git?: SimpleGit) {
+    constructor(workDir: string, manifest: Manifest, logger: Logger, docker: DockerWrapper = new DefaultDocker(), git?: Git) {
         super(logger, workDir, manifest, git);
         this.manifest = manifest as ContainerManifest;
-        this.docker = docker || new Docker({echo: false});
+        this.docker = docker;
     }
 
     async deploy() {

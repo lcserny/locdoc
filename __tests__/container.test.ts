@@ -1,8 +1,9 @@
-const {logger, createFakeGit, createFakeDocker} = require("../src/test-util");
-const {ContainerDeployer} = require("../src/container");
-const tmp = require("tmp-promise");
-const path = require("node:path");
-const fs = require("node:fs/promises");
+import {createFakeDocker, createFakeGit, logger} from "../src/test-util";
+import {ContainerDeployer} from "../src/container";
+import tmp from "tmp-promise";
+import path from "node:path";
+import fs from "node:fs/promises";
+import type {Manifest} from "../src/lib";
 
 describe("container deployer", () => {
     test("deployer deploys correctly", async () => {
@@ -23,7 +24,7 @@ describe("container deployer", () => {
             };
 
             const docker = createFakeDocker();
-            const deployer = new ContainerDeployer(d.path, manifest, logger, docker, createFakeGit());
+            const deployer = new ContainerDeployer(d.path, manifest as Manifest, logger, docker, createFakeGit());
 
             const baseName = "myRepo";
             const artifactRepoDir = path.join(d.path, baseName)

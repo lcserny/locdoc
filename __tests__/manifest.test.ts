@@ -1,7 +1,10 @@
-const {ManifestParser} = require("../src/manifest");
-const {logger} = require("../src/test-util");
-const tmp = require("tmp-promise");
-const fs = require("node:fs/promises");
+import {ManifestParser} from "../src/manifest";
+import {logger} from "../src/test-util";
+import tmp from "tmp-promise";
+import fs from "node:fs/promises";
+import type {ContainerManifest} from "../src/container";
+import type {NodeJSCliManifest} from "../src/nodejs-cli";
+import type {SystemDManifest} from "../src/systemd";
 
 describe("manifestParser", () => {
     const parser = new ManifestParser(logger, "someName");
@@ -17,7 +20,7 @@ config:
 
         await tmp.withFile(async (f) => {
             await fs.writeFile(f.path, minimalContainerManifest);
-            const manifest = await parser.parse(f.path);
+            const manifest = await parser.parse(f.path) as ContainerManifest;
 
             expect(manifest.artifact.repo).toBe("someGitRepo");
             expect(manifest.artifact.tag).toBe("master");
@@ -50,7 +53,7 @@ config:
 
         await tmp.withFile(async (f) => {
             await fs.writeFile(f.path, minimalNodeCliManifest);
-            const manifest = await parser.parse(f.path);
+            const manifest = await parser.parse(f.path) as NodeJSCliManifest;
 
             expect(manifest.artifact.repo).toBe("cliGitRepo");
             expect(manifest.artifact.tag).toBe("master");
@@ -61,8 +64,9 @@ config:
             expect(manifest.deploy.type).toBe("nodejs-cli");
             expect(manifest.deploy.binOut).toBe("outPath");
             expect(manifest.deploy.name).toBe("someName");
-            expect(manifest.deploy.bins.one).toBe("one.js");
-            expect(manifest.deploy.bins.two).toBe("src/two.js");
+            const binsMap = new Map(Object.entries(manifest.deploy.bins));
+            expect(binsMap.get("one")).toBe("one.js");
+            expect(binsMap.get("two")).toBe("src/two.js");
         });
     });
 
@@ -85,7 +89,7 @@ config:
 
         await tmp.withFile(async (f) => {
             await fs.writeFile(f.path, minimalSystemDManifest);
-            const manifest = await parser.parse(f.path);
+            const manifest = await parser.parse(f.path) as SystemDManifest;
 
             expect(manifest.artifact.repo).toBe("systemdGitRepo");
             expect(manifest.artifact.tag).toBe("master");

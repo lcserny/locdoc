@@ -18,6 +18,7 @@ module.exports = [
         rules: {
             '@typescript-eslint/array-type': 'error',
             '@typescript-eslint/consistent-type-imports': 'error',
+            "@typescript-eslint/no-explicit-any": "off"
         },
     },
     {

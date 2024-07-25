@@ -2,22 +2,19 @@ import {NODEJS_CLI, NodeJSCliDeployer} from "./nodejs-cli";
 import {ContainerDeployer} from "./container";
 import {SYSTEMD, SystemDDeployer} from "./systemd";
 import type {Logger} from "winston";
-import type {SimpleGit} from "simple-git";
-import type {Docker} from "docker-cli-js";
-import type {Deployer, Manifest} from "./lib";
+import type {Deployer, DockerWrapper, Git, Manifest} from "./lib";
 
 export class DeployRetriever {
 
     private readonly type: string;
     private readonly workDir: string;
     private readonly logger: Logger;
-    // TODO: might not be ok from tests
-    private readonly git?: SimpleGit;
-    private readonly docker?: Docker;
+    private readonly git?: Git;
+    private readonly docker?: DockerWrapper;
     private readonly manifest: Manifest;
     
-    constructor(type: string, workDir: string, manifest: Manifest,
-                logger: Logger, git?: SimpleGit, docker?: Docker) {
+    constructor(type: string, workDir: string, manifest: Manifest, logger: Logger,
+                git?: Git, docker?: DockerWrapper) {
         this.type = type;
         this.workDir = workDir;
         this.manifest = manifest;

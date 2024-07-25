@@ -1,9 +1,10 @@
-const {logger, createFakeGit} = require("../src/test-util");
-const {NodeJSCliDeployer} = require("../src/nodejs-cli");
-const path = require("node:path");
-const fse = require("fs-extra");
-const fs = require("node:fs/promises");
-const tmp = require("tmp-promise");
+import {createFakeGit, logger} from "../src/test-util";
+import {NodeJSCliDeployer} from "../src/nodejs-cli";
+import path from "node:path";
+import fse from "fs-extra";
+import fs from "node:fs/promises";
+import tmp from "tmp-promise";
+import type {Manifest} from "../src/lib";
 
 describe("nodejs-cli deployer", () => {
     test("deployer deploys correctly", async () => {
@@ -11,20 +12,18 @@ describe("nodejs-cli deployer", () => {
             const binOut = path.join(d.path, "bin");
             await fs.mkdir(binOut, {recursive: true});
 
+            const bins: unknown = { firstCmd: "one.js", secondCmd: "two.js", };
             const manifest = {
                 deploy: {
                     binOut: binOut,
-                    bins: {
-                        firstCmd: "one.js",
-                        secondCmd: "two.js",
-                    }
+                    bins: bins
                 }
             };
             const baseName = "myRepo";
             const artifactRepoDir = path.join(d.path, baseName)
             await fs.mkdir(artifactRepoDir, {recursive: true});
 
-            const deployer = new NodeJSCliDeployer(d.path, manifest, logger, createFakeGit());
+            const deployer = new NodeJSCliDeployer(d.path, manifest as Manifest, logger, createFakeGit());
 
             expect(await fse.pathExists(artifactRepoDir)).toBeTruthy();
             const newArtifactPath = await deployer.moveCli(artifactRepoDir);

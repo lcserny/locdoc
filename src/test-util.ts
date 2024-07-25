@@ -2,6 +2,7 @@ import winston from "winston";
 import fs from "node:fs/promises";
 import tmp from "tmp-promise";
 import path from "node:path";
+import type {DockerWrapper, Git} from "./lib";
 
 const { combine, timestamp, prettyPrint, errors } = winston.format;
 
@@ -21,10 +22,10 @@ export async function createFiles(dir: string, filesMap: Map<string, string>) {
     }
 }
 
-export function createFakeGit() {
+export function createFakeGit(): Git {
     return { clone: jest.fn().mockImplementation(() => { }) };
 }
 
-export function createFakeDocker() {
+export function createFakeDocker(): DockerWrapper {
     return { command: jest.fn().mockImplementation(() => { }) };
 }
