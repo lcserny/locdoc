@@ -1,36 +1,30 @@
-const winston = require("winston");
-const fs = require("node:fs/promises");
-const tmp = require("tmp-promise");
-const path = require("node:path");
+import winston from "winston";
+import fs from "node:fs/promises";
+import tmp from "tmp-promise";
+import path from "node:path";
+
 const { combine, timestamp, prettyPrint, errors } = winston.format;
 
 tmp.setGracefulCleanup();
 
-const noOpLogger = winston.createLogger({
+export const logger = winston.createLogger({
     format: combine(errors({stack: true}), timestamp(), prettyPrint()),
     transports: [new winston.transports.Console()],
     level: "none"
 });
 
-async function createFiles(dir, filesMap) {
+export async function createFiles(dir: string, filesMap: Map<string, string>) {
     filesMap = filesMap || new Map();
-    for (let [fileName, contents] of filesMap) {
+    for (const [fileName, contents] of filesMap) {
         const fullPath = path.join(dir, fileName);
         await fs.writeFile(fullPath, contents);
     }
 }
 
-function createFakeGit() {
+export function createFakeGit() {
     return { clone: jest.fn().mockImplementation(() => { }) };
 }
 
-function createFakeDocker() {
+export function createFakeDocker() {
     return { command: jest.fn().mockImplementation(() => { }) };
 }
-
-module.exports = {
-    logger: noOpLogger,
-    createFakeGit,
-    createFakeDocker,
-    createFiles
-};

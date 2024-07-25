@@ -1,17 +1,22 @@
-const YAML = require("yaml");
-const fs = require("node:fs/promises");
-const {NodeJSCliManifest, NODEJS_CLI} = require("./nodejs-cli");
-const {ContainerManifest} = require("./container");
-const lodash = require("lodash");
-const {SYSTEMD, SystemDManifest} = require("./systemd");
+import YAML from "yaml";
+import fs from "node:fs/promises";
+import {NODEJS_CLI, NodeJSCliManifest} from "./nodejs-cli";
+import {ContainerManifest} from "./container";
+import lodash from "lodash";
+import {SYSTEMD, SystemDManifest} from "./systemd";
+import type {Logger} from "winston";
+import {Manifest} from "./lib";
 
-class ManifestParser {
-    constructor(logger, randomName) {
-        this.logger = logger;
+export class ManifestParser {
+    private logger: Logger;
+    private readonly randomName: string;
+
+    constructor(logger: Logger, randomName: string) {
         this.randomName = randomName;
+        this.logger = logger;
     }
 
-    async parse(manifestFilePath) {
+    async parse(manifestFilePath: string): Promise<Manifest> {
         this.logger.info(`Parsing manifest '${manifestFilePath}'`);
 
         const manifestFile = await fs.readFile(manifestFilePath, "utf8");
@@ -37,8 +42,4 @@ class ManifestParser {
 
         return mergedManifest;
     }
-}
-
-module.exports = {
-    ManifestParser
 }

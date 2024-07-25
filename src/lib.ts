@@ -1,16 +1,21 @@
-const path = require("node:path");
-const fs = require("node:fs/promises");
-const simpleGit = require("simple-git");
-const util = require("node:util");
-const child_process = require("node:child_process");
+import path from "node:path";
+import fs from "node:fs/promises";
+import type {SimpleGit} from "simple-git";
+import simpleGit from "simple-git";
+import util from "node:util";
+import child_process from "node:child_process";
+import type {Logger} from "winston";
+import type {NodeJSCliDeployer, NodeJSCliManifest} from "./nodejs-cli";
+import type {SystemDDeployer, SystemDManifest} from "./systemd";
+import type {ContainerDeployer, ContainerManifest} from "./container";
 
-const exec = util.promisify(child_process.exec);
+export const exec = util.promisify(child_process.exec);
 
-function getRandomNumberAsString(min, max) {
+export function getRandomNumberAsString(min: number, max: number) {
     return Math.floor(Math.random() * (max - min) + min).toString();
 }
 
-async function symlinkExists(symlinkPath) {
+export async function symlinkExists(symlinkPath: string) {
     try {
         await fs.lstat(symlinkPath);
         return true;
@@ -19,8 +24,14 @@ async function symlinkExists(symlinkPath) {
     }
 }
 
-class BaseManifest {
-    constructor(randomName) {
+export type Manifest = NodeJSCliManifest | SystemDManifest | ContainerManifest;
+
+export type Deployer = NodeJSCliDeployer | SystemDDeployer | ContainerDeployer;
+
+export class BaseManifest {
+    protected name: string;
+    
+    constructor(randomName: string) {
         this.name = randomName
     }
 
@@ -29,8 +40,14 @@ class BaseManifest {
     }
 }
 
-class BaseDeployer {
-    constructor(logger, workDir, manifest, git) {
+export class BaseDeployer {
+
+    protected readonly manifest: Manifest
+    protected logger: Logger;
+    protected readonly workDir: string;
+    protected git: SimpleGit;
+    
+    constructor(logger: Logger, workDir: string, manifest: Manifest, git?: SimpleGit) {
         this.logger = logger;
         this.workDir = workDir;
         this.manifest = manifest;
@@ -46,7 +63,7 @@ class BaseDeployer {
         return artifactRepoDir;
     }
 
-    async cloneConfigRepo(artifactRepoDir) {
+    async cloneConfigRepo(artifactRepoDir: string) {
         const configRepoDir = path.join(artifactRepoDir, this.manifest.config.destinationPath);
         await fs.mkdir(configRepoDir, {recursive: true});
 
@@ -62,16 +79,8 @@ class BaseDeployer {
         return configRepoDir;
     }
 
-    async executeBuildCommand(artifactRepoDir) {
+    async executeBuildCommand(artifactRepoDir: string) {
         this.logger.info("Executing build command");
         await exec(`bash -c 'cd ${artifactRepoDir} && ${this.manifest.artifact.buildCmd}'`);
     }
-}
-
-module.exports = {
-    getRandomNumberAsString,
-    symlinkExists,
-    BaseManifest,
-    BaseDeployer,
-    exec
 }

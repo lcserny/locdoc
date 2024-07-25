@@ -22,7 +22,7 @@ config:
             expect(manifest.artifact.repo).toBe("someGitRepo");
             expect(manifest.artifact.tag).toBe("master");
             expect(manifest.artifact.dockerFile).toBe("Dockerfile");
-            expect(manifest.artifact.buildCmd).toBeNull();
+            expect(manifest.artifact.buildCmd).toBeFalsy();
             expect(manifest.config.repo).toBe("anotherGitRepo");
             expect(manifest.config.tag).toBe("master");
             expect(manifest.config.destinationPath).toBe("somePath");

@@ -1,16 +1,23 @@
-const path = require("node:path");
-const {BaseManifest, BaseDeployer, exec} = require("./lib");
-const fs = require("node:fs/promises");
-const os = require("node:os");
+import path from "node:path";
+import type { Manifest} from "./lib";
+import {BaseDeployer, BaseManifest, exec} from "./lib";
+import fs from "node:fs/promises";
+import os from "node:os";
+import type {Logger} from "winston";
+import type {SimpleGit} from "simple-git";
 
-const SYSTEMD = "systemd";
+export const SYSTEMD = "systemd";
 
 const NAME_KEY = "<NAME>";
 const EXE_KEY = "<EXE>";
 
-class SystemDDeployer extends BaseDeployer {
-    constructor(workDir, manifest, logger, git, templatePath) {
+export class SystemDDeployer extends BaseDeployer {
+    private readonly templatePath: string;
+    protected manifest: SystemDManifest;
+    
+    constructor(workDir: string, manifest: Manifest, logger: Logger, git?: SimpleGit, templatePath?: string) {
         super(logger, workDir, manifest, git);
+        this.manifest = manifest as SystemDManifest;
         this.templatePath = templatePath || path.join(__dirname, "..", "resources", "templates", "systemd_basic");
     }
 
@@ -33,17 +40,17 @@ class SystemDDeployer extends BaseDeployer {
         await this.checkStatusSystemDService(serviceName);
     }
 
-    async checkStatusSystemDService(serviceName) {
+    async checkStatusSystemDService(serviceName: string) {
         this.logger.info("Checking status of systemd service");
         await exec(`bash -c "systemctl --user status ${serviceName}"`);
     }
 
-    async startSystemDService(serviceName) {
+    async startSystemDService(serviceName: string) {
         this.logger.info("Starting systemd service");
         await exec(`bash -c "systemctl --user start ${serviceName}"`);
     }
 
-    async enableSystemDService(serviceName) {
+    async enableSystemDService(serviceName: string) {
         this.logger.info("Enabling systemd service");
         await exec(`bash -c "systemctl --user enable ${serviceName}"`);
     }
@@ -53,7 +60,7 @@ class SystemDDeployer extends BaseDeployer {
         await exec(`bash -c "systemctl --user daemon-reload"`);
     }
 
-    async createSystemDFile(servicePath, serviceName) {
+    async createSystemDFile(servicePath: string, serviceName: string) {
         this.logger.info("Creating systemd service file");
         let contents = await fs.readFile(this.templatePath, "utf8");
         contents = contents.replace(NAME_KEY, this.manifest.deploy.name);
@@ -63,25 +70,24 @@ class SystemDDeployer extends BaseDeployer {
         await fs.writeFile(path.join(servicePath, serviceName), contents);
     }
 
-    async copyArtifact(artifactRepoDir) {
+    async copyArtifact(artifactRepoDir: string) {
         this.logger.info("Copying built artifact to deploy path");
         await fs.cp(path.join(artifactRepoDir, this.manifest.artifact.buildExecutable), this.manifest.deploy.path);
     }
 
-    async stopCurrentService(serviceName) {
+    async stopCurrentService(serviceName: string) {
         this.logger.info("Stopping current systemd service");
         await exec(`bash -c "systemctl --user stop ${serviceName}"`);
     }
 }
 
-class SystemDManifest extends BaseManifest {
-    artifact = {repo: null, tag: "master", buildCmd: null, buildExecutable: null};
-    config = {repo: null, tag: "master", destinationPath: null};
-    deploy = {type: null, name: "", path: null, preRunFlags: "", postRunFlags: "", cmdPrefix: ""};
+export class SystemDManifest extends BaseManifest {
+    artifact = {repo: "", tag: "master", buildCmd: "", buildExecutable: ""};
+    config = {repo: "", tag: "master", destinationPath: ""};
+    deploy = {type: SYSTEMD, name: this.name, path: "", preRunFlags: "", postRunFlags: "", cmdPrefix: ""};
 
-    constructor(randomName) {
+    constructor(randomName: string) {
         super(randomName);
-        this.deploy.name = this.name;
     }
 
     validate() {
@@ -105,6 +111,7 @@ class SystemDManifest extends BaseManifest {
             throw new Error("manifest provided has no `config.destinationPath`");
         }
 
+        // TODO: not ok?
         if (this.deploy?.type == null) {
             throw new Error("manifest provided has no `deploy.type`");
         }
@@ -113,10 +120,4 @@ class SystemDManifest extends BaseManifest {
             throw new Error("manifest provided has no `deploy.path`");
         }
     }
-}
-
-module.exports = {
-    SystemDManifest,
-    SystemDDeployer,
-    SYSTEMD
 }

@@ -1,13 +1,19 @@
-const path = require("node:path");
-const fs = require("node:fs/promises");
-const {BaseManifest, BaseDeployer, symlinkExists} = require("./lib");
-const fse = require("fs-extra");
+import path from "node:path";
+import fs from "node:fs/promises";
+import type { Manifest} from "./lib";
+import {BaseDeployer, BaseManifest, symlinkExists} from "./lib";
+import fse from "fs-extra";
+import type {Logger} from "winston";
+import type {SimpleGit} from "simple-git";
 
-const NODEJS_CLI = "nodejs-cli";
+export const NODEJS_CLI = "nodejs-cli";
 
-class NodeJSCliDeployer extends BaseDeployer{
-    constructor(workDir, manifest, logger, git) {
+export class NodeJSCliDeployer extends BaseDeployer{
+    protected manifest: NodeJSCliManifest;
+
+    constructor(workDir: string, manifest: Manifest, logger: Logger, git?: SimpleGit) {
         super(logger, workDir, manifest, git);
+        this.manifest = manifest as NodeJSCliManifest;
     }
 
     async deploy() {
@@ -18,7 +24,7 @@ class NodeJSCliDeployer extends BaseDeployer{
         await this.createSymlink(newArtifactPath);
     }
 
-    async createSymlink(newArtifactPath) {
+    async createSymlink(newArtifactPath: string) {
         this.logger.info(`Creating symlinks: ${JSON.stringify(this.manifest.deploy.bins, null, 2)}`);
         for (const [key, val] of Object.entries(this.manifest.deploy.bins)) {
             const target = path.join(newArtifactPath, val.toString());
@@ -30,7 +36,7 @@ class NodeJSCliDeployer extends BaseDeployer{
         }
     }
 
-    async moveCli(artifactRepoDir) {
+    async moveCli(artifactRepoDir: string) {
         this.logger.info(`Moving cli to bin out: ${this.manifest.deploy.binOut}`);
         const newArtifactPath = path.join(this.manifest.deploy.binOut, path.basename(artifactRepoDir));
         if (await fse.pathExists(newArtifactPath)) {
@@ -41,12 +47,12 @@ class NodeJSCliDeployer extends BaseDeployer{
     }
 }
 
-class NodeJSCliManifest extends BaseManifest {
-    artifact = {repo: null, tag: "master", buildCmd: "npm install"};
-    config = {repo: null, tag: "master", destinationPath: ""};
-    deploy = {type: NODEJS_CLI, name: "", binOut: null, bins: null};
+export class NodeJSCliManifest extends BaseManifest {
+    artifact = {repo: "", tag: "master", buildCmd: "npm install"};
+    config = {repo: "", tag: "master", destinationPath: ""};
+    deploy = {type: NODEJS_CLI, name: "", binOut: "", bins: Map<string, string>};
 
-    constructor(randomName) {
+    constructor(randomName: string) {
         super(randomName);
         this.deploy.name = this.name;
     }
@@ -68,10 +74,4 @@ class NodeJSCliManifest extends BaseManifest {
             throw new Error("manifest provided has no `deploy.bins`");
         }
     }
-}
-
-module.exports = {
-    NodeJSCliManifest,
-    NodeJSCliDeployer,
-    NODEJS_CLI
 }

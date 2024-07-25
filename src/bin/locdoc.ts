@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 
-const {program} = require("commander")
-const {ManifestParser} = require("../manifest");
-const winston = require("winston");
-const path = require("node:path");
-const os = require("node:os");
-const fs = require("node:fs/promises");
-const {DeployRetriever} = require("../deploy");
-const {getRandomNumberAsString} = require("../lib");
+import {program} from "commander";
+import {ManifestParser} from "../manifest";
+import winston from "winston";
+import path from "node:path";
+import os from "node:os";
+import fs from "node:fs/promises";
+import {DeployRetriever} from "../deploy";
+import {getRandomNumberAsString} from "../lib";
 
 const { combine, timestamp, prettyPrint, printf, errors } = winston.format;
 
@@ -53,8 +53,9 @@ async function main() {
         await fs.rm(workDir, {recursive: true});
 
         logger.info("Done!");
-    } catch (e) {
-        logger.error(e.stack);
+    } catch (e: unknown) {
+        const error = e as Error;
+        logger.error(error.stack);
     }
 }
 

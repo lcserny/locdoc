@@ -1,12 +1,19 @@
-const {Docker} = require("docker-cli-js");
-const path = require("node:path");
-const {BaseManifest, BaseDeployer} = require("./lib");
+import {Docker} from "docker-cli-js";
+import path from "node:path";
+import type { Manifest} from "./lib";
+import {BaseDeployer, BaseManifest} from "./lib";
+import type {Logger} from "winston";
+import type {SimpleGit} from "simple-git";
 
-const CONTAINER = "container";
+export const CONTAINER = "container";
 
-class ContainerDeployer extends BaseDeployer {
-    constructor(workDir, manifest, logger, docker, git) {
+export class ContainerDeployer extends BaseDeployer {
+    private docker: Docker;
+    protected manifest: ContainerManifest;
+    
+    constructor(workDir: string, manifest: Manifest, logger: Logger, docker?: Docker, git?: SimpleGit) {
         super(logger, workDir, manifest, git);
+        this.manifest = manifest as ContainerManifest;
         this.docker = docker || new Docker({echo: false});
     }
 
@@ -22,7 +29,7 @@ class ContainerDeployer extends BaseDeployer {
         const dockerContainer = this.manifest.deploy.name;
         await this.cleanExistingContainer(dockerContainer);
 
-        let runFlags = this.ensureNetwork(dockerNet);
+        const runFlags = this.ensureNetwork(dockerNet);
         await this.createContainer(dockerContainer, runFlags, dockerImage);
 
         await this.cleanupBuild();
@@ -32,20 +39,20 @@ class ContainerDeployer extends BaseDeployer {
         await this.docker.command(`image prune -f`);
     }
 
-    async createContainer(dockerContainer, runFlags, dockerImage) {
+    async createContainer(dockerContainer: string, runFlags: string, dockerImage: string) {
         this.logger.info(`Starting new docker container '${dockerContainer}'`);
         await this.docker.command(`run -d ${runFlags} --name ${dockerContainer} ${dockerImage}`);
     }
 
-    ensureNetwork(dockerNet) {
-        let runFlags = this.manifest.deploy.runFlags;
+    ensureNetwork(dockerNet: string) {
+        let runFlags: string = this.manifest.deploy.runFlags;
         if (!runFlags.includes("--network")) {
             runFlags += ` --network ${dockerNet}`;
         }
         return runFlags;
     }
 
-    async cleanExistingContainer(dockerContainer) {
+    async cleanExistingContainer(dockerContainer: string) {
         const containersResp = await this.docker.command(`ps -a --filter name=${dockerContainer}`);
         if (containersResp.containerList.length > 0) {
             const container = containersResp.containerList[0];
@@ -73,7 +80,7 @@ class ContainerDeployer extends BaseDeployer {
         return dockerNet;
     }
 
-    async buildImage(artifactRepoDir) {
+    async buildImage(artifactRepoDir: string) {
         this.logger.info("Building Docker image");
         const dockerImage = `${this.manifest.image.name}:${this.manifest.image.version}`;
         const dockerFilePath = path.join(artifactRepoDir, this.manifest.artifact.dockerFile);
@@ -82,13 +89,13 @@ class ContainerDeployer extends BaseDeployer {
     }
 }
 
-class ContainerManifest extends BaseManifest {
-    artifact = {repo: null, tag: "master", dockerFile: "Dockerfile", buildCmd: null};
-    config = {repo: null, tag: "master", destinationPath: null};
+export class ContainerManifest extends BaseManifest {
+    artifact = {repo: "", tag: "master", dockerFile: "Dockerfile", buildCmd: ""};
+    config = {repo: "", tag: "master", destinationPath: ""};
     image = {name: "", version: "1.0"};
-    deploy = {type: "container", name: "", network: undefined, runFlags: undefined};
+    deploy = {type: CONTAINER, name: "", network: "", runFlags: ""};
 
-    constructor(randomName) {
+    constructor(randomName: string) {
         super(randomName);
         this.deploy.name = this.name;
         this.image.name = this.name + "-image";
@@ -107,10 +114,4 @@ class ContainerManifest extends BaseManifest {
             throw new Error("manifest provided has no `config.destinationPath`");
         }
     }
-}
-
-module.exports = {
-    ContainerManifest,
-    ContainerDeployer,
-    CONTAINER
 }
