@@ -9,9 +9,20 @@ export const CONTAINER = "container";
 class DefaultDocker implements DockerWrapper {
     private docker: Docker = new Docker({echo: false});
 
-    async command(cmd: string) {
+    async command<T>(cmd: string): Promise<T> {
         return this.docker.command(cmd);
     }
+}
+
+interface DockerContainers {
+    containerList: {
+        status: string;
+        "container id": string;
+    }[];
+}
+
+interface DockerNetworks {
+    network: unknown[];
 }
 
 export class ContainerDeployer extends BaseDeployer {
@@ -60,7 +71,7 @@ export class ContainerDeployer extends BaseDeployer {
     }
 
     async cleanExistingContainer(dockerContainer: string) {
-        const containersResp = await this.docker.command(`ps -a --filter name=${dockerContainer}`);
+        const containersResp = await this.docker.command<DockerContainers>(`ps -a --filter name=${dockerContainer}`);
         if (containersResp.containerList.length > 0) {
             const container = containersResp.containerList[0];
             const containerId = container["container id"];
@@ -78,7 +89,7 @@ export class ContainerDeployer extends BaseDeployer {
     async createNetwork() {
         const dockerNet = this.manifest.deploy.network;
         if (dockerNet) {
-            const networksResp = await this.docker.command(`network ls --filter name=${dockerNet}`);
+            const networksResp = await this.docker.command<DockerNetworks>(`network ls --filter name=${dockerNet}`);
             if (networksResp.network.length === 0) {
                 this.logger.info(`Docker network '${dockerNet}' not found, creating...`);
                 await this.docker.command(`network create ${dockerNet}`);

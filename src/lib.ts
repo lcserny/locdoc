@@ -44,7 +44,7 @@ class DefaultGit implements Git {
 
 export interface DockerWrapper {
     // eslint-disable-next-line no-unused-vars
-    command(cmd: string): Promise<any>;
+    command<T>(cmd: string): Promise<T>;
 }
 
 export class BaseManifest {
