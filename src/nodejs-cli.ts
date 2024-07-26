@@ -4,6 +4,7 @@ import type {Git, Manifest} from "./lib";
 import {BaseDeployer, BaseManifest, symlinkExists} from "./lib";
 import fse from "fs-extra";
 import type {Logger} from "winston";
+import os from "node:os";
 
 export const NODEJS_CLI = "nodejs-cli";
 
@@ -32,6 +33,7 @@ export class NodeJSCliDeployer extends BaseDeployer{
                 await fs.rm(link);
             }
             await fs.symlink(target, link);
+            await fs.chmod(link, "0755");
         }
     }
 

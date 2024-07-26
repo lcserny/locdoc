@@ -33,24 +33,31 @@ describe("nodejs-cli deployer", () => {
             await fs.writeFile(path.join(newArtifactPath, "one.js"), "");
             await fs.writeFile(path.join(newArtifactPath, "two.js"), "");
 
-            expect(await fse.pathExists(path.join(binOut, "firstCmd"))).toBeFalsy()
-            expect(await fse.pathExists(path.join(binOut, "secondCmd"))).toBeFalsy();
+            const firstCmdPath = path.join(binOut, "firstCmd");
+            const secondCmdPath = path.join(binOut, "secondCmd");
+
+            expect(await fse.pathExists(firstCmdPath)).toBeFalsy()
+            expect(await fse.pathExists(secondCmdPath)).toBeFalsy();
 
             await deployer.createSymlink(newArtifactPath);
 
-            expect(await fse.pathExists(path.join(binOut, "firstCmd"))).toBeTruthy();
-            expect(await fse.pathExists(path.join(binOut, "secondCmd"))).toBeTruthy();
+            expect(await fse.pathExists(firstCmdPath)).toBeTruthy();
+            expect(await fse.pathExists(secondCmdPath)).toBeTruthy();
+            const firstCmdStat = await fs.lstat(firstCmdPath);
+            expect(firstCmdStat.mode).toBe(41471);
+            const secondCmdStat = await fs.lstat(secondCmdPath);
+            expect(secondCmdStat.mode).toBe(41471);
 
-            await fs.rm(path.join(binOut, "firstCmd"));
-            await fs.rm(path.join(binOut, "secondCmd"));
+            await fs.rm(firstCmdPath);
+            await fs.rm(secondCmdPath);
 
-            await fs.symlink(path.join(newArtifactPath, "one.js_wrong"), path.join(binOut, "firstCmd"));
-            await fs.symlink(path.join(newArtifactPath, "two.js_wrong"), path.join(binOut, "secondCmd"));
+            await fs.symlink(path.join(newArtifactPath, "one.js_wrong"), firstCmdPath);
+            await fs.symlink(path.join(newArtifactPath, "two.js_wrong"), secondCmdPath);
 
             await deployer.createSymlink(newArtifactPath);
 
-            expect(await fse.pathExists(path.join(binOut, "firstCmd"))).toBeTruthy();
-            expect(await fse.pathExists(path.join(binOut, "secondCmd"))).toBeTruthy();
+            expect(await fse.pathExists(firstCmdPath)).toBeTruthy();
+            expect(await fse.pathExists(secondCmdPath)).toBeTruthy();
         }, {unsafeCleanup: true});
     });
 });
