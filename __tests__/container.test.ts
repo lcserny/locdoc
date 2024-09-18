@@ -100,16 +100,24 @@ describe("container deployer", () => {
             expect(createdContainer).toBeTruthy();
 
             let cleanedDockerImages = false;
-            docker.command = jest.fn().mockImplementationOnce((cmd) => {
-                if (cmd.includes("image prune -f")) {
-                    cleanedDockerImages = true;
-                }
-            });
+            let cleanedDockerSystem = false;
+            docker.command = jest.fn()
+                .mockImplementationOnce((cmd) => {
+                    if (cmd.includes("image prune -f")) {
+                        cleanedDockerImages = true
+                    }
+                })
+                .mockImplementationOnce((cmd) => {
+                    if (cmd.includes("system prune -a -f")) {
+                        cleanedDockerSystem = true;
+                    }
+                })
 
             await deployer.cleanupBuild();
 
-            expect(docker.command).toBeCalledTimes(1);
+            expect(docker.command).toBeCalledTimes(2);
             expect(cleanedDockerImages).toBeTruthy();
+            expect(cleanedDockerSystem).toBeTruthy();
         }, {unsafeCleanup: true});
     });
 });
