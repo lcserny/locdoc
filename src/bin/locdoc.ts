@@ -2,14 +2,12 @@
 
 import {program} from "commander";
 import {ManifestParser} from "../manifest";
-import winston from "winston";
 import path from "node:path";
 import os from "node:os";
 import fs from "node:fs/promises";
 import {DeployRetriever} from "../deploy";
-import {getRandomNumberAsString} from "../lib";
-
-const { combine, timestamp, prettyPrint, printf, errors } = winston.format;
+import {createLogger, getRandomNumberAsString} from "../lib";
+import ora from "ora";
 
 program
     .name("locdoc")
@@ -21,16 +19,8 @@ program.parse();
 
 const args = program.opts();
 
-const logger = winston.createLogger({
-    level: "info",
-    format: combine(errors({stack: true}), timestamp(), args.json
-        ? prettyPrint()
-        : printf(({timestamp, level, message, stack}) => {
-            const text = `${timestamp} ${level.toUpperCase()} ${message}`;
-            return stack ? text + '\n' + stack : text;
-        })),
-    transports: [new winston.transports.Console()]
-});
+const spinner = ora("Processing...");
+const logger = createLogger(args, spinner);
 
 async function main() {
     try {
@@ -38,6 +28,8 @@ async function main() {
             logger.error("Windows is not supported");
             return;
         }
+
+        spinner.start();
 
         const manifestParser = new ManifestParser(logger, getRandomNumberAsString(10000, 99999));
         const manifest = await manifestParser.parse(args.manifest);
@@ -52,10 +44,11 @@ async function main() {
         logger.info(`Removing workdir '${workDir}'`);
         await fs.rm(workDir, {recursive: true});
 
-        logger.info("Done!");
+        spinner.succeed(" Done!");
     } catch (e: unknown) {
         const error = e as Error;
         logger.error(error.stack);
+        spinner.fail(" Error!");
     }
 }
 
