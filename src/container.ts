@@ -54,8 +54,9 @@ export class ContainerDeployer extends BaseDeployer {
     }
 
     async cleanupBuild() {
-        await this.docker.command(`image prune -f`);
-        await this.docker.command(`system prune -a -f`);
+        await this.docker.command(`image prune -af`);
+        await this.docker.command(`system prune -af`);
+        await this.docker.command(`builder prune -af`);
     }
 
     async createContainer(dockerContainer: string, runFlags: string, dockerImage: string) {
