@@ -10,6 +10,7 @@
     "bin": {
         "locdoc": "./src/bin/locdoc.js"
     },
+
     "jest": {
         "testTimeout": 30000
     },
