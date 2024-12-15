@@ -76,7 +76,11 @@ export class SystemDDeployer extends BaseDeployer {
 
     async stopCurrentService(serviceName: string) {
         this.logger.info("Stopping current systemd service");
-        await exec(`bash -c "systemctl --user stop ${serviceName}"`);
+        try {
+            await exec(`bash -c "systemctl --user stop ${serviceName}"`);
+        } catch (e) {
+            this.logger.info("No current systemd service found");
+        }
     }
 }
 
