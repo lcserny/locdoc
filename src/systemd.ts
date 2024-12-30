@@ -65,12 +65,13 @@ export class SystemDDeployer extends BaseDeployer {
         contents = contents.replace(NAME_KEY, this.manifest.deploy.name);
         contents = contents.replace(EXE_KEY, `${this.manifest.deploy.cmdPrefix} ${this.manifest.deploy.preRunFlags} ${this.manifest.deploy.path} ${this.manifest.deploy.postRunFlags}`);
 
-        await fs.mkdir(servicePath, {recursive: true});
+        await fs.mkdir(servicePath, { recursive: true });
         await fs.writeFile(path.join(servicePath, serviceName), contents);
     }
 
     async copyArtifact(artifactRepoDir: string) {
         this.logger.info("Copying built artifact to deploy path");
+        await fs.mkdir(path.dirname(this.manifest.deploy.path), { recursive: true });
         await fs.cp(path.join(artifactRepoDir, this.manifest.artifact.buildExecutable), this.manifest.deploy.path);
     }
 

@@ -38,9 +38,10 @@ export class NodeJSCliDeployer extends BaseDeployer{
 
     async moveCli(artifactRepoDir: string) {
         this.logger.info(`Moving cli to bin out: ${this.manifest.deploy.binOut}`);
+        await fs.mkdir(this.manifest.deploy.binOut, { recursive: true });
         const newArtifactPath = path.join(this.manifest.deploy.binOut, path.basename(artifactRepoDir));
         if (await fse.pathExists(newArtifactPath)) {
-            await fs.rm(newArtifactPath, {recursive: true});
+            await fs.rm(newArtifactPath, { recursive: true });
         }
         await fs.rename(artifactRepoDir, newArtifactPath);
         return newArtifactPath;
