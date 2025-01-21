@@ -2,7 +2,6 @@
 Description=<NAME>
 StartLimitBurst=10
 StartLimitIntervalSec=50
-After=network.target
 
 [Service]
 Type=simple
@@ -12,4 +11,4 @@ Restart=on-failure
 RestartSec=10
 
 [Install]
-WantedBy=default.target
+WantedBy=multi-user.target
