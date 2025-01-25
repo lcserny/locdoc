@@ -22,13 +22,10 @@ const args = program.opts();
 const spinner = ora("Processing...");
 const logger = createLogger(args, spinner);
 
+// TODO: deploy type alternative to sysmteD but for windows?
+
 async function main() {
     try {
-        if (os.platform() === 'win32') {
-            logger.error("Windows is not supported");
-            return;
-        }
-
         spinner.start();
 
         const manifestParser = new ManifestParser(logger, getRandomNumberAsString(10000, 99999));

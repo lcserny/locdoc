@@ -1,6 +1,7 @@
 import {NODEJS_CLI, NodeJSCliDeployer} from "./nodejs-cli";
 import {ContainerDeployer} from "./container";
 import {SYSTEMD, SystemDDeployer} from "./systemd";
+import * as os from "node:os";
 import type {Logger} from "winston";
 import type {Deployer, DockerWrapper, Git, Manifest} from "./lib";
 
@@ -24,12 +25,17 @@ export class DeployRetriever {
     }
 
     getDeployer(): Deployer {
-        let deployer;
+        const currentOs = os.platform();
+
+        let deployer: Deployer;
         switch (this.type) {
             case NODEJS_CLI:
                 deployer = new NodeJSCliDeployer(this.workDir, this.manifest, this.logger, this.git);
                 break;
             case SYSTEMD:
+                if (currentOs == "win32") {
+                    throw new Error("Windows does not support SymtemD deployments.");
+                }
                 deployer = new SystemDDeployer(this.workDir, this.manifest, this.logger, this.git);
                 break;
             default:

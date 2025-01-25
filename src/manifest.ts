@@ -22,7 +22,7 @@ export class ManifestParser {
         const manifestFile = await fs.readFile(manifestFilePath, "utf8");
         const manifest = YAML.parse(manifestFile);
 
-        let template;
+        let template: Manifest;
         switch (manifest.deploy?.type) {
             case NODEJS_CLI:
                 template = new NodeJSCliManifest(this.randomName);
