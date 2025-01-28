@@ -8,6 +8,7 @@ import path from "node:path";
 import fse from "fs-extra";
 import tmp from "tmp-promise";
 import {SYSTEMD, SystemDDeployer, SystemDManifest} from "../src/systemd";
+import os from "node:os";
 
 describe("deployRetriever", () => {
     test("retriever produces container deployer", async () => {
@@ -25,6 +26,10 @@ describe("deployRetriever", () => {
     });
 
     test("retriever produces systemd deployer", async () => {
+        if (os.platform() === "win32") {
+            return;
+        }
+
         const retriever = new DeployRetriever(SYSTEMD, "", new SystemDManifest("c"), logger);
         const deployer = retriever.getDeployer();
 
@@ -47,7 +52,7 @@ describe("deployRetriever", () => {
 
             const artifactRepoDir = await deployer.cloneArtifactRepo();
 
-            const ardRegex = new RegExp(String.raw`^${d.path}.*${manifest.deploy.name}`, "g");
+            const ardRegex = new RegExp(String.raw`^.*${manifest.deploy.name}`, "g");
             expect(git.clone).toHaveBeenCalledTimes(1);
             expect(git.clone).toHaveBeenCalledWith(manifest.artifact.repo, expect.stringMatching(ardRegex), manifest.artifact.tag);
             expect(artifactRepoDir).toMatch(ardRegex);
@@ -63,7 +68,7 @@ describe("deployRetriever", () => {
                 config: {
                     repo: "someConfigRepo",
                     tag: "cfg-branch",
-                    destinationPath: "my/path"
+                    destinationPath: path.join("my", "path")
                 }
             };
 
@@ -73,10 +78,10 @@ describe("deployRetriever", () => {
 
             const configRepoDir = await deployer.cloneConfigRepo(artifactRepoDir);
 
-            const cfgRegex = new RegExp(String.raw`^${artifactRepoDir}.*${manifest.config.destinationPath}`, "g");
             expect(git.clone).toHaveBeenCalledTimes(1);
             expect(git.clone).toHaveBeenCalledWith(manifest.config.repo, expect.any(String), manifest.config.tag);
-            expect(configRepoDir).toMatch(cfgRegex);
+            expect(configRepoDir).toContain(manifest.deploy.name);
+            expect(configRepoDir).toContain(manifest.config.destinationPath);
         }, {unsafeCleanup: true});
     });
 

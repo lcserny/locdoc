@@ -139,7 +139,6 @@ export class BaseDeployer {
 
     async executeBuildCommand(artifactRepoDir: string) {
         this.logger.info("Executing build command");
-        const escapedDir = artifactRepoDir.replace(/[\\$'"]/g, "\\$&");
-        await exec(`bash -c '${this.manifest.artifact.buildCmd}'`, {cwd: escapedDir});
+        await exec(`bash -c '${this.manifest.artifact.buildCmd}'`, {cwd: artifactRepoDir});
     }
 }

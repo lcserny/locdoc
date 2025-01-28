@@ -32,9 +32,9 @@ describe("container deployer", () => {
 
             const dockerImage = await deployer.buildImage(artifactRepoDir);
 
-            expect(docker.command).toBeCalledTimes(1);
-            const dkrRegex = new RegExp(String.raw`^build -t ${dockerImage}.*${manifest.artifact.dockerFile}.*${artifactRepoDir}`, "g");
-            expect(docker.command).toBeCalledWith(expect.stringMatching(dkrRegex));
+            expect(docker.command).toHaveBeenCalledTimes(1);
+            const dkrRegex = new RegExp(String.raw`^build -t ${dockerImage}.*${manifest.artifact.dockerFile}.*${baseName}`, "g");
+            expect(docker.command).toHaveBeenCalledWith(expect.stringMatching(dkrRegex));
 
             let createdNetwork = false;
             docker.command = jest.fn()
@@ -52,7 +52,7 @@ describe("container deployer", () => {
             const dockerNet = await deployer.createNetwork();
 
             expect(dockerNet).toBe(manifest.deploy.network);
-            expect(docker.command).toBeCalledTimes(2);
+            expect(docker.command).toHaveBeenCalledTimes(2);
             expect(createdNetwork).toBeTruthy();
 
             let stoppedContainer = false;
@@ -81,7 +81,7 @@ describe("container deployer", () => {
 
             expect(stoppedContainer).toBeTruthy();
             expect(removedContainer).toBeTruthy();
-            expect(docker.command).toBeCalledTimes(3);
+            expect(docker.command).toHaveBeenCalledTimes(3);
 
             expect(manifest.deploy.runFlags).not.toContain(dockerNet);
             const flags = deployer.ensureNetwork(dockerNet);
@@ -96,7 +96,7 @@ describe("container deployer", () => {
 
             await deployer.createContainer(manifest.deploy.name, flags, dockerImage);
 
-            expect(docker.command).toBeCalledTimes(1);
+            expect(docker.command).toHaveBeenCalledTimes(1);
             expect(createdContainer).toBeTruthy();
 
             let cleanedDockerImages = false;
@@ -121,7 +121,7 @@ describe("container deployer", () => {
 
             await deployer.cleanupBuild();
 
-            expect(docker.command).toBeCalledTimes(3);
+            expect(docker.command).toHaveBeenCalledTimes(3);
             expect(cleanedDockerImages).toBeTruthy();
             expect(cleanedDockerSystem).toBeTruthy();
             expect(cleanedDockerBuilder).toBeTruthy();

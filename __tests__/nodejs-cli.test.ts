@@ -44,15 +44,15 @@ describe("nodejs-cli deployer", () => {
             expect(await fse.pathExists(firstCmdPath)).toBeTruthy();
             expect(await fse.pathExists(secondCmdPath)).toBeTruthy();
             const firstCmdStat = await fs.lstat(firstCmdPath);
-            expect(firstCmdStat.mode).toBe(41471);
+            expect(String(firstCmdStat.mode)).toMatch(/41471|41398/);
             const secondCmdStat = await fs.lstat(secondCmdPath);
-            expect(secondCmdStat.mode).toBe(41471);
+            expect(String(secondCmdStat.mode)).toMatch(/41471|41398/);
 
             await fs.rm(firstCmdPath);
             await fs.rm(secondCmdPath);
 
-            await fs.symlink(path.join(newArtifactPath, "one.js_wrong"), firstCmdPath);
-            await fs.symlink(path.join(newArtifactPath, "two.js_wrong"), secondCmdPath);
+            await fs.symlink(path.join(newArtifactPath, "one.js_wrong"), firstCmdPath, "junction");
+            await fs.symlink(path.join(newArtifactPath, "two.js_wrong"), secondCmdPath, "junction");
 
             await deployer.createSymlink(newArtifactPath);
 

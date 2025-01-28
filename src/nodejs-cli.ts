@@ -31,7 +31,7 @@ export class NodeJSCliDeployer extends BaseDeployer{
             if (await symlinkExists(link)) {
                 await fs.rm(link);
             }
-            await fs.symlink(target, link);
+            await fs.symlink(target, link, "junction");
             await fs.chmod(link, "0755");
         }
     }
