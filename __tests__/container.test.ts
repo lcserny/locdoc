@@ -94,7 +94,7 @@ describe("container deployer", () => {
                     }
                 });
 
-            await deployer.createContainer(manifest.deploy.name, flags, dockerImage);
+            await deployer.createContainer(artifactRepoDir, manifest.deploy.name, flags, dockerImage);
 
             expect(docker.command).toHaveBeenCalledTimes(1);
             expect(createdContainer).toBeTruthy();
