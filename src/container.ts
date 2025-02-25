@@ -48,7 +48,7 @@ export class ContainerDeployer extends BaseDeployer {
         await this.cleanExistingContainer(dockerContainer);
 
         const runFlags = this.ensureNetwork(dockerNet);
-        await this.createContainer(dockerContainer, runFlags, dockerImage);
+        await this.createContainer(artifactRepoDir, dockerContainer, runFlags, dockerImage);
 
         await this.cleanupBuild();
     }
@@ -59,9 +59,13 @@ export class ContainerDeployer extends BaseDeployer {
         await this.docker.command(`builder prune -af`);
     }
 
-    async createContainer(dockerContainer: string, runFlags: string, dockerImage: string) {
+    async createContainer(artifactRepoDir: string, dockerContainer: string, runFlags: string, dockerImage: string) {
         this.logger.info(`Starting new docker container '${dockerContainer}'`);
-        await this.docker.command(`run -d ${runFlags} --name ${dockerContainer} ${dockerImage}`);
+        await this.docker.command(this.replaceVars(`run -d ${runFlags} --name ${dockerContainer} ${dockerImage}`, artifactRepoDir));
+    }
+
+    private replaceVars(cmd: string, artifactRepoDir: string): string {
+        return cmd.replace("${repoDir}", artifactRepoDir);
     }
 
     ensureNetwork(dockerNet: string) {
