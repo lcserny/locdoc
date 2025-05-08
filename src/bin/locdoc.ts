@@ -31,7 +31,7 @@ async function main() {
         const manifestParser = new ManifestParser(logger, getRandomNumberAsString(10000, 99999));
         const manifest = await manifestParser.parse(args.manifest);
 
-        const workDir = path.join(os.tmpdir(), getRandomNumberAsString(10000, 99999))
+        const workDir = path.join(os.homedir(), "tmp", getRandomNumberAsString(10000, 99999))
         logger.info(`Creating workdir '${workDir}'`);
 
         const deployRetriever = new DeployRetriever(manifest.deploy?.type, workDir, manifest, logger);
