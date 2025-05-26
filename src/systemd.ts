@@ -32,7 +32,7 @@ export class SystemDDeployer extends BaseDeployer {
 
         await this.stopCurrentService(serviceName);
         await this.copyArtifact(artifactRepoDir);
-        await this.createSystemDFile(servicePath, serviceName);
+        await this.createSystemDFile(servicePath, serviceName, artifactRepoDir);
         await this.reloadSystemDDaemon();
         await this.enableSystemDService(serviceName);
         await this.startSystemDService(serviceName);
@@ -59,11 +59,11 @@ export class SystemDDeployer extends BaseDeployer {
         await exec(`bash -c "systemctl --user daemon-reload"`);
     }
 
-    async createSystemDFile(servicePath: string, serviceName: string) {
+    async createSystemDFile(servicePath: string, serviceName: string, artifactRepoDir: string) {
         this.logger.info("Creating systemd service file");
         let contents = await fs.readFile(this.templatePath, "utf8");
         contents = contents.replace(NAME_KEY, this.manifest.deploy.name);
-        contents = contents.replace(EXE_KEY, this.replaceVars(`${this.manifest.deploy.cmdPrefix} ${this.manifest.deploy.preRunFlags} ${this.manifest.deploy.path} ${this.manifest.deploy.postRunFlags}`));
+        contents = contents.replace(EXE_KEY, this.replaceVars(`${this.manifest.deploy.cmdPrefix} ${this.manifest.deploy.preRunFlags} ${this.manifest.deploy.path} ${this.manifest.deploy.postRunFlags}`, artifactRepoDir));
 
         await fs.mkdir(servicePath, { recursive: true });
         await fs.writeFile(path.join(servicePath, serviceName), contents);

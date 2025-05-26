@@ -39,7 +39,7 @@ describe("systemD deployer", () => {
             expect(fse.pathExistsSync(manifest.deploy.path)).toBeTruthy();
 
             expect(fse.pathExistsSync(path.join(d.path, serviceName))).toBeFalsy();
-            await deployer.createSystemDFile(d.path, serviceName);
+            await deployer.createSystemDFile(d.path, serviceName, d.path);
             expect(fse.pathExistsSync(path.join(d.path, serviceName))).toBeTruthy();
             const serviceFileContents = await fs.readFile(path.join(d.path, serviceName), "utf8");
             expect(serviceFileContents.includes(manifest.deploy.name)).toBeTruthy();
