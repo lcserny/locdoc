@@ -137,6 +137,10 @@ export class BaseDeployer {
         return configRepoDir;
     }
 
+    protected replaceVars(cmd: string, artifactRepoDir: string): string {
+        return cmd.replace("${repoDir}", artifactRepoDir);
+    }
+
     async executeBuildCommand(artifactRepoDir: string) {
         this.logger.info("Executing build command");
         await exec(`bash -c '${this.manifest.artifact.buildCmd}'`, {cwd: artifactRepoDir});

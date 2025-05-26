@@ -64,10 +64,6 @@ export class ContainerDeployer extends BaseDeployer {
         await this.docker.command(this.replaceVars(`run -d ${runFlags} --name ${dockerContainer} ${dockerImage}`, artifactRepoDir));
     }
 
-    private replaceVars(cmd: string, artifactRepoDir: string): string {
-        return cmd.replace("${repoDir}", artifactRepoDir);
-    }
-
     ensureNetwork(dockerNet: string) {
         let runFlags: string = this.manifest.deploy.runFlags;
         if (!runFlags.includes("--network")) {
