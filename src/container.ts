@@ -74,10 +74,17 @@ export class ContainerDeployer extends BaseDeployer {
         // let convertedCmd = this.replaceVars(`run -d ${runFlags} --name ${dockerContainer} ${dockerImage}`, artifactRepoDir);
         let convertedCmd = this.replaceVars(`--detach ${runFlags}`, artifactRepoDir);
 
+        this.logger.warn(convertedCmd);
+        this.logger.warn(convertedCmd.split(" "));
+
+        // FIXME: this is not using the runFlags correctly? it sends them to: /docker-entrypoint.sh: 38: exec: -d: not found
+        //  maybe second param is the CMD not the runflags?
         await this.dockerode.run(
             dockerImage,
-            convertedCmd.split(" "),
+            // convertedCmd.split(" "),
+            [],
             process.stdout,
+            // TODO add here the runflags? need a mapper?
             { name: dockerContainer }
         );
 
@@ -86,7 +93,7 @@ export class ContainerDeployer extends BaseDeployer {
 
     ensureNetwork(dockerNet: string) {
         let runFlags: string = this.manifest.deploy.runFlags;
-        if (!runFlags.includes("--network")) {
+        if (!runFlags.includes("--network") && dockerNet) {
             runFlags += ` --network=${dockerNet}`;
         }
         return runFlags;
@@ -145,11 +152,12 @@ export class ContainerDeployer extends BaseDeployer {
         const dockerImage = `${this.manifest.image.name}:${this.manifest.image.version}`;
         // const dockerFilePath = path.join(artifactRepoDir, this.manifest.artifact.dockerFile);
 
-        const stream = await this.dockerode.buildImage({ src: [this.manifest.artifact.dockerFile], context: artifactRepoDir }, { t: dockerImage });
+        const stream = await this.dockerode.buildImage({ src: [".", this.manifest.artifact.dockerFile], context: artifactRepoDir }, { t: dockerImage });
         // TODO move this to reuse?
         await new Promise<void>((resolve, reject) => {
             stream.on("end", resolve);
             stream.on("error", reject);
+            // TODO use this on error? with this commented build is stuck...
             stream.on("data", (chunk) => process.stdout.write(chunk));
         });
 
