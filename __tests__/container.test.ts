@@ -1,5 +1,5 @@
 import {createFakeDocker, createFakeGit, logger} from "../src/test-util";
-import {ContainerDeployer} from "../src/container";
+import {ContainerDeployer, ContainerOptionsParser} from "../src/container";
 import tmp from "tmp-promise";
 import path from "node:path";
 import fs from "node:fs/promises";
@@ -126,5 +126,18 @@ describe("container deployer", () => {
             expect(cleanedDockerSystem).toBeTruthy();
             expect(cleanedDockerBuilder).toBeTruthy();
         }, {unsafeCleanup: true});
+    });
+});
+
+describe("container parser", () => {
+    test("can parse --env-file", async () => {
+        await tmp.withFile(async (f) => {
+            await fs.writeFile(f.path, "FOO=bar\nBAZ=qux");
+
+            const parser = new ContainerOptionsParser();
+            const options = parser.parseRunOptions("contName", "imgName", `--env-file=${f.path}`);
+
+            expect(options.Env).toEqual(["FOO=bar", "BAZ=qux"]);
+        }, {postfix: ".tmp"});
     });
 });
