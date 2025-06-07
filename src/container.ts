@@ -138,71 +138,93 @@ export class ContainerOptionsParser {
         return envLines.map(line => line.trim());
     }
 
+    private parseMemory(memoryValue: string): number {
+        let byteMultiplier = 1;
+
+        if (memoryValue.endsWith("m")) {
+            byteMultiplier = 1024 * 1024; // MB to bytes
+        } else if (memoryValue.endsWith("g")) {
+            byteMultiplier = 1024 * 1024 * 1024; // GB to bytes
+        }
+
+        const parsedValue = memoryValue.slice(0, -1);
+        const memoryInBytes = parseInt(parsedValue, 10);
+
+        if (isNaN(memoryInBytes)) {
+            throw new Error(`Invalid memory value: ${memoryValue}`);
+        }
+
+        return memoryInBytes * byteMultiplier;
+    }
+
+    private setPorts(options: ContainerCreateOptions, value: string) {
+        const [hostPort, containerPort] = value.split(":");
+        const portKey = `${containerPort}/tcp`;
+        options.ExposedPorts![portKey] = {};
+        if (!options.HostConfig!.PortBindings) {
+            options.HostConfig!.PortBindings = {};
+        }
+        options.HostConfig!.PortBindings[portKey] = [{
+            HostIp: "0.0.0.0",
+            HostPort: hostPort
+        }];
+    }
+
+    private removeQuotes(value: string): string {
+        if (value.startsWith('"') && value.endsWith('"')) {
+            return value.slice(1, -1);
+        }
+        return value;
+    }
+
     parseRunOptions(containerName: string, imageName: string, runFlags: string): ContainerCreateOptions {
-        /*
-
-        runFlags: --memory=128m --restart=unless-stopped --expose=10010:10010 --add-host="host.docker.internal:host-gateway" --volume=/home/leonardo/keys:/keys
-        runFlags: --memory=48m --restart=unless-stopped --expose=10030:80 --env-file=${repoDir}/src/environments/vars.sh
-
-        * --memory > HostConfig.Memory number
-        * --restart > HostConfig.RestartPolicy HostRestartPolicy
-        * --expose > HostConfig.PortBindings ports list
-        * --env-file > parse manually to Env list
-        * --add-host > HostConfig.ExtraHosts
-        * --volume > HostConfig.Binds
-        * */
+        const options: ContainerCreateOptions = {};
+        options.name = containerName;
+        options.Image = imageName;
+        options.AttachStdout = true;
+        options.HostConfig = {};
+        options.ExposedPorts = {};
 
         const runFlagsList = runFlags.split(" ");
-        const options: ContainerCreateOptions = {};
-
         for (const runFlag of runFlagsList) {
             const [flag, value] = runFlag.split("=");
             switch (flag) {
                 case "--env-file": {
                     options.Env = this.parseEnvFile(value);
+                    break
                 }
+                case "--memory": {
+                    options.HostConfig.Memory = this.parseMemory(value);
+                    break;
+                }
+                case "--restart": {
+                    options.HostConfig.RestartPolicy = { Name: this.removeQuotes(value) };
+                    break;
+                }
+                case "--add-host": {
+                    if (!options.HostConfig.ExtraHosts) {
+                        options.HostConfig.ExtraHosts = [];
+                    }
+                    options.HostConfig.ExtraHosts.push(this.removeQuotes(value));
+                    break
+                }
+                case "--volume": {
+                    if (!options.HostConfig.Binds) {
+                        options.HostConfig.Binds = [];
+                    }
+                    options.HostConfig.Binds.push(this.removeQuotes(value));
+                    break;
+                }
+                case "--expose": {
+                    this.setPorts(options, value);
+                    break
+                }
+                default:
+                    throw new Error("Unsupported run flag: " + runFlag);
             }
         }
-        //     if (runFlag.startsWith("--memory=")) {
-        //         const memoryValue = runFlag.split("=")[1];
-        //         options.HostConfig = { Memory: parseInt(memoryValue) * 1024 * 1024 }; // Convert MB to bytes
-        //     } else if (runFlag.startsWith("--restart=")) {
-        //         const restartPolicy = runFlag.split("=")[1];
-        //         options.HostConfig = { RestartPolicy: { Name: restartPolicy } };
-        //     } else if (runFlag.startsWith("--expose=")) {
-        //         const portMapping = runFlag.split("=")[1].split(":");
-        //         options.ExposedPorts = { [`${portMapping[0]}/tcp`]: {} };
-        //         options.HostConfig = { PortBindings: { [`${portMapping[0]}/tcp`]: [{ HostIp: "
-        // }
 
         return options;
-
-        // return {
-        //     name: containerName,
-        //     Image: imageName,
-        //     AttachStdout: true,
-        //     Env: [
-        //         "API_URL=http://192.168.68.199:10020/api/v1",
-        //         "SECURITY_URL=http://192.168.68.199:10010/security"
-        //     ],
-        //     ExposedPorts: {
-        //         ["80/tcp"]: {},
-        //     },
-        //     HostConfig: {
-        //         Memory: 48 * 1024 * 1024,
-        //         RestartPolicy: {
-        //             Name: "unless-stopped"
-        //         },
-        //         PortBindings: {
-        //             ["80/tcp"]: [
-        //                 {
-        //                     HostIp: "0.0.0.0",
-        //                     HostPort: "10030"
-        //                 }
-        //             ]
-        //         }
-        //     }
-        // };
     }
 }
 
