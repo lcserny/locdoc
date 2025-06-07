@@ -81,6 +81,7 @@ class DefaultGit implements Git {
     }
 }
 
+// TODO remove and refactor this
 export interface DockerWrapper {
     // eslint-disable-next-line no-unused-vars
     command<T>(cmd: string): Promise<T>;

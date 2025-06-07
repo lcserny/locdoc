@@ -6,6 +6,7 @@ import fs from "node:fs/promises";
 import type {Manifest} from "../src/lib";
 
 describe("container deployer", () => {
+    // FIXME
     test("deployer deploys correctly", async () => {
         await tmp.withDir(async (d) => {
             const manifest = {
@@ -185,10 +186,10 @@ describe("container parser", () => {
         expect(options.HostConfig?.Binds?.[0]).toEqual("/host/path:/container/path");
     });
 
-    test("can parse --expose", () => {
+    test("can parse --publish", () => {
         const parser = new ContainerOptionsParser();
 
-        const options = parser.parseRunOptions("contName", "imgName", `--expose=10030:80`);
+        const options = parser.parseRunOptions("contName", "imgName", `--publish=10030:80`);
         expect(options.ExposedPorts?.["80"]).toEqual({});
         expect(options.HostConfig?.PortBindings?.["80"]).toEqual([
             {

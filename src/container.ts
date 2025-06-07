@@ -7,6 +7,7 @@ import fs from "node:fs";
 
 export const CONTAINER = "container";
 
+// TODO remove and refactor these
 class DefaultDocker implements DockerWrapper {
     private docker: Docker = new Docker({echo: false});
 
@@ -215,7 +216,7 @@ export class ContainerOptionsParser {
                     options.HostConfig.Binds.push(this.removeQuotes(value));
                     break;
                 }
-                case "--expose": {
+                case "--publish": {
                     this.setPorts(options, value);
                     break
                 }
