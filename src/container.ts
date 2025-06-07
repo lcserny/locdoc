@@ -2,7 +2,8 @@ import {Docker} from "docker-cli-js";
 import type {DockerWrapper, Git, Manifest} from "./lib";
 import {BaseDeployer, BaseManifest} from "./lib";
 import type {Logger} from "winston";
-import Dockerode, {ContainerCreateOptions} from "dockerode";
+import type {ContainerCreateOptions} from "dockerode";
+import Dockerode from "dockerode";
 import fs from "node:fs";
 
 export const CONTAINER = "container";
@@ -16,20 +17,10 @@ class DefaultDocker implements DockerWrapper {
     }
 }
 
-interface DockerContainers {
-    containerList: {
-        status: string;
-        "container id": string;
-    }[];
-}
-
-interface DockerNetworks {
-    network: unknown[];
-}
-
 export class ContainerDeployer extends BaseDeployer {
     protected manifest: ContainerManifest;
 
+    // TODO
     private dockerode: Dockerode;
     
     constructor(workDir: string, manifest: Manifest, logger: Logger, docker: DockerWrapper = new DefaultDocker(), git?: Git) {
