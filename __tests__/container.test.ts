@@ -190,8 +190,8 @@ describe("container parser", () => {
         const parser = new ContainerOptionsParser();
 
         const options = parser.parseRunOptions("contName", "imgName", `--publish=10030:80`);
-        expect(options.ExposedPorts?.["80"]).toEqual({});
-        expect(options.HostConfig?.PortBindings?.["80"]).toEqual([
+        expect(options.ExposedPorts?.["80/tcp"]).toEqual({});
+        expect(options.HostConfig?.PortBindings?.["80/tcp"]).toEqual([
             {
                 HostIp: "0.0.0.0",
                 HostPort: "10030"
