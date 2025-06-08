@@ -49,7 +49,9 @@ class DefaultDocker implements DockerWrapper {
     }
 
     async getContainer(filterName: string): Promise<ContainerWrapper | undefined> {
-        const containers = await this.dockerode.listContainers({ filters: { name: [filterName] } });
+        const containers = await this.dockerode.listContainers({ filters: { name: [filterName] }, all: true });
+        console.log("found containers:");
+        console.log(JSON.stringify(containers));
         if (containers.length === 0) {
             return undefined;
         }
