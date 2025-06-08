@@ -1,4 +1,4 @@
-import {createFakeDocker, createFakeGit, logger} from "../src/test-util";
+import {createFakeContainer, createFakeDocker, createFakeGit, logger} from "../src/test-util";
 import {ContainerDeployer, ContainerOptionsParser} from "../src/container";
 import tmp from "tmp-promise";
 import path from "node:path";
@@ -6,7 +6,6 @@ import fs from "node:fs/promises";
 import type {Manifest} from "../src/lib";
 
 describe("container deployer", () => {
-    // FIXME
     test("deployer deploys correctly", async () => {
         await tmp.withDir(async (d) => {
             const manifest = {
@@ -33,99 +32,65 @@ describe("container deployer", () => {
 
             const dockerImage = await deployer.buildImage(artifactRepoDir);
 
-            expect(docker.command).toHaveBeenCalledTimes(1);
-            const dkrRegex = new RegExp(String.raw`^build -t ${dockerImage}.*${manifest.artifact.dockerFile}.*${baseName}`, "g");
-            expect(docker.command).toHaveBeenCalledWith(expect.stringMatching(dkrRegex));
-
-            let createdNetwork = false;
-            docker.command = jest.fn()
-                .mockImplementationOnce((cmd) => {
-                    if (cmd.includes("network ls")) {
-                        return {network: ""};
-                    }
-                })
-                .mockImplementationOnce((cmd) => {
-                    if (cmd.includes("network create")) {
-                        createdNetwork = true;
-                    }
-                });
+            expect(docker.buildImage).toHaveBeenCalledTimes(1);
+            expect(docker.buildImage).toHaveBeenCalledWith(
+                expect.stringMatching(dockerImage),
+                expect.arrayContaining([
+                    expect.stringMatching("."),
+                    expect.stringMatching(manifest.artifact.dockerFile),
+                ]),
+                expect.stringContaining(baseName)
+            );
 
             const dockerNet = await deployer.createNetwork();
 
             expect(dockerNet).toBe(manifest.deploy.network);
-            expect(docker.command).toHaveBeenCalledTimes(2);
-            expect(createdNetwork).toBeTruthy();
+            expect(docker.networkExists).toHaveBeenCalledTimes(1);
+            expect(docker.networkExists).toHaveBeenCalledWith(manifest.deploy.network);
+            expect(docker.createNetwork).toHaveBeenCalledTimes(1);
+            expect(docker.createNetwork).toHaveBeenCalledWith(manifest.deploy.network);
 
-            let stoppedContainer = false;
-            let removedContainer = false;
-            docker.command = jest.fn()
-                .mockImplementationOnce((cmd) => {
-                    if (cmd.includes("ps -a --filter")) {
-                        return { containerList: [{
-                            "container id": "irrelevant",
-                            status: "up"
-                        }] };
-                    }
-                })
-                .mockImplementationOnce((cmd) => {
-                    if (cmd.includes("stop")) {
-                        stoppedContainer = true;
-                    }
-                })
-                .mockImplementationOnce((cmd) => {
-                    if (cmd.includes("rm -v")) {
-                        removedContainer = true;
-                    }
-                });
+            const container = createFakeContainer();
+            docker.getContainer = jest.fn().mockImplementationOnce(() => {
+                return container;
+            });
+            container.getStatus = jest.fn().mockImplementationOnce(() => {
+                return "up";
+            });
 
             await deployer.cleanExistingContainer(manifest.deploy.name);
 
-            expect(stoppedContainer).toBeTruthy();
-            expect(removedContainer).toBeTruthy();
-            expect(docker.command).toHaveBeenCalledTimes(3);
+            expect(docker.getContainer).toHaveBeenCalledTimes(1);
+            expect(docker.getContainer).toHaveBeenCalledWith(manifest.deploy.name);
+            expect(container.getStatus).toHaveBeenCalledTimes(1);
+            expect(container.stop).toHaveBeenCalledTimes(1);
+            expect(container.remove).toHaveBeenCalledTimes(1);
 
             expect(manifest.deploy.runFlags).not.toContain(dockerNet);
             const flags = deployer.ensureNetwork(dockerNet);
             expect(flags).toContain(dockerNet);
 
-            let createdContainer = false;
-            docker.command = jest.fn().mockImplementationOnce((cmd) => {
-                    if (cmd.includes("run -d")) {
-                        createdContainer = true;
-                    }
-                });
+            docker.createContainer = jest.fn().mockImplementationOnce(() => {
+                return container;
+            });
+
+            container.start = jest.fn().mockImplementationOnce(() => {
+                return new Promise(() => {});
+            });
 
             await deployer.createContainer(artifactRepoDir, manifest.deploy.name, flags, dockerImage);
 
-            expect(docker.command).toHaveBeenCalledTimes(1);
-            expect(createdContainer).toBeTruthy();
-
-            let cleanedDockerImages = false;
-            let cleanedDockerSystem = false;
-            let cleanedDockerBuilder = false;
-            docker.command = jest.fn()
-                .mockImplementationOnce((cmd) => {
-                    if (cmd.includes("image prune -af")) {
-                        cleanedDockerImages = true
-                    }
-                })
-                .mockImplementationOnce((cmd) => {
-                    if (cmd.includes("system prune -af")) {
-                        cleanedDockerSystem = true;
-                    }
-                })
-                .mockImplementationOnce((cmd) => {
-                    if (cmd.includes("builder prune -af")) {
-                        cleanedDockerBuilder = true;
-                    }
-                })
+            expect(docker.createContainer).toHaveBeenCalledTimes(1);
+            expect(docker.createContainer).toHaveBeenCalledWith(
+                expect.stringContaining(manifest.deploy.name),
+                expect.stringContaining(dockerImage),
+                expect.stringContaining(flags)
+            );
+            expect(container.start).toHaveBeenCalledTimes(1);
 
             await deployer.cleanupBuild();
 
-            expect(docker.command).toHaveBeenCalledTimes(3);
-            expect(cleanedDockerImages).toBeTruthy();
-            expect(cleanedDockerSystem).toBeTruthy();
-            expect(cleanedDockerBuilder).toBeTruthy();
+            expect(docker.cleanup).toHaveBeenCalledTimes(1);
         }, {unsafeCleanup: true});
     });
 });

@@ -30,7 +30,6 @@
     "dependencies": {
         "@types/dockerode": "^3.3.39",
         "commander": "^12.1.0",
-        "docker-cli-js": "^2.10.0",
         "dockerode": "^4.0.6",
         "fs-extra": "^11.2.0",
         "lodash": "^4.17.21",

@@ -1,5 +1,4 @@
-import {Docker} from "docker-cli-js";
-import type {DockerWrapper, Git, Manifest} from "./lib";
+import type {ContainerWrapper, DockerWrapper, Git, Manifest} from "./lib";
 import {BaseDeployer, BaseManifest} from "./lib";
 import type {Logger} from "winston";
 import type {ContainerCreateOptions} from "dockerode";
@@ -8,26 +7,92 @@ import fs from "node:fs";
 
 export const CONTAINER = "container";
 
-// TODO remove and refactor these
-class DefaultDocker implements DockerWrapper {
-    private docker: Docker = new Docker({echo: false});
+class DefaultContainer implements ContainerWrapper {
 
-    async command<T>(cmd: string): Promise<T> {
-        return this.docker.command(cmd);
+    private container: Dockerode.Container;
+
+    constructor(container: Dockerode.Container) {
+        this.container = container;
+    }
+
+    async start(): Promise<void> {
+        return this.container.start();
+    }
+
+    async stop(): Promise<void> {
+        return this.container.stop();
+    }
+
+    async remove(): Promise<void> {
+        return this.container.remove({ force: true, v: true });
+    }
+
+    async getStatus(): Promise<string> {
+        const info = await this.container.inspect();
+        return info.State.Status;
+    }
+}
+
+class DefaultDocker implements DockerWrapper {
+
+    private dockerode: Dockerode;
+
+    constructor() {
+        this.dockerode = new Dockerode();
+    }
+
+    async createContainer(dockerContainer: string, dockerImage: string, convertedCmd: string): Promise<ContainerWrapper> {
+        const parser = new ContainerOptionsParser();
+        const options = parser.parseRunOptions(dockerContainer, dockerImage, convertedCmd);
+        const newContainer = await this.dockerode.createContainer(options);
+        return new DefaultContainer(newContainer);
+    }
+
+    async getContainer(filterName: string): Promise<ContainerWrapper | undefined> {
+        const containers = await this.dockerode.listContainers({ filters: { name: [filterName] } });
+        if (containers.length === 0) {
+            return undefined;
+        }
+        const container = this.dockerode.getContainer(containers[0].Id);
+        return new DefaultContainer(container);
+    }
+
+    async networkExists(filterName: string): Promise<boolean> {
+        const networks = await this.dockerode.listNetworks({ filters: { name: [filterName] } });
+        return networks.length !== 0;
+    }
+
+    async createNetwork(networkName: string): Promise<void> {
+        await this.dockerode.createNetwork({ Name: networkName });
+    }
+
+    async buildImage(imageName: string, src: string[], context: string): Promise<void> {
+        const stream = await this.dockerode.buildImage({ src, context }, { t: imageName });
+        await new Promise<void>((resolve, reject) => {
+            stream.on("end", resolve);
+            stream.on("error", reject);
+            stream.on("data", () => {});
+        });
+    }
+
+    async cleanup(): Promise<void> {
+        await this.dockerode.pruneImages();
+        await this.dockerode.pruneContainers();
+        await this.dockerode.pruneVolumes();
+        await this.dockerode.pruneNetworks();
     }
 }
 
 export class ContainerDeployer extends BaseDeployer {
+
     protected manifest: ContainerManifest;
 
-    // TODO
-    private dockerode: Dockerode;
-    
+    private docker: DockerWrapper;
+
     constructor(workDir: string, manifest: Manifest, logger: Logger, docker: DockerWrapper = new DefaultDocker(), git?: Git) {
         super(logger, workDir, manifest, git);
         this.manifest = manifest as ContainerManifest;
-
-        this.dockerode = new Dockerode();
+        this.docker = docker;
     }
 
     async deploy() {
@@ -49,20 +114,14 @@ export class ContainerDeployer extends BaseDeployer {
     }
 
     async cleanupBuild() {
-        await this.dockerode.pruneImages();
-        await this.dockerode.pruneContainers();
-        await this.dockerode.pruneVolumes();
-        await this.dockerode.pruneNetworks();
+        await this.docker.cleanup();
     }
 
     async createContainer(artifactRepoDir: string, dockerContainer: string, runFlags: string, dockerImage: string) {
         this.logger.info(`Starting new docker container '${dockerContainer}'`);
 
-        const parser = new ContainerOptionsParser();
         const convertedCmd = this.replaceVars(runFlags, artifactRepoDir);
-        const options = parser.parseRunOptions(dockerContainer, dockerImage, convertedCmd);
-
-        const newContainer = await this.dockerode.createContainer(options);
+        const newContainer = await this.docker.createContainer(dockerContainer, dockerImage, convertedCmd);
         newContainer.start()
             .then(() => this.logger.info("Container started successfully"))
             .catch(err => this.logger.error("Error starting container:", err));
@@ -77,28 +136,27 @@ export class ContainerDeployer extends BaseDeployer {
     }
 
     async cleanExistingContainer(dockerContainer: string) {
-        const containers = await this.dockerode.listContainers({ filters: { name: [dockerContainer] } });
-        if (containers.length > 0) {
-            const containerInfo = containers[0];
-            const containerId = containerInfo.Id;
-            const container = this.dockerode.getContainer(containerId);
-            this.logger.info(`Existing container found '${containerId}'`);
-            if (containerInfo.Status.toLowerCase().includes("up")) {
+        const container = await this.docker.getContainer(dockerContainer);
+        if (container) {
+            this.logger.info(`Existing container found '${dockerContainer}'`);
+
+            const status = await container.getStatus();
+            if (status.toLowerCase().includes("up")) {
                 this.logger.info(`Stopping container '${dockerContainer}'`);
                 await container.stop();
             }
             this.logger.info(`Removing existing container '${dockerContainer}'`);
-            await container.remove({ force: true, v: true });
+            await container.remove();
         }
     }
 
     async createNetwork() {
         const dockerNet = this.manifest.deploy.network;
         if (dockerNet) {
-            const networks = await this.dockerode.listNetworks({ filters: { name: [dockerNet] } });
-            if (networks.length === 0) {
+            const networkExists = await this.docker.networkExists(dockerNet);
+            if (!networkExists) {
                 this.logger.info(`Docker network '${dockerNet}' not found, creating...`);
-                await this.dockerode.createNetwork({ Name: dockerNet });
+                await this.docker.createNetwork(dockerNet);
             }
         }
         return dockerNet;
@@ -107,14 +165,7 @@ export class ContainerDeployer extends BaseDeployer {
     async buildImage(artifactRepoDir: string) {
         this.logger.info("Building Docker image");
         const dockerImage = `${this.manifest.image.name}:${this.manifest.image.version}`;
-
-        const stream = await this.dockerode.buildImage({ src: [".", this.manifest.artifact.dockerFile], context: artifactRepoDir }, { t: dockerImage });
-        await new Promise<void>((resolve, reject) => {
-            stream.on("end", resolve);
-            stream.on("error", reject);
-            stream.on("data", () => {});
-        });
-
+        await this.docker.buildImage(dockerImage, [".", this.manifest.artifact.dockerFile], artifactRepoDir);
         return dockerImage;
     }
 }
