@@ -14,6 +14,13 @@ describe("container parser", () => {
         }, {postfix: ".tmp"});
     });
 
+    test("can parse --env", () => {
+        const parser = new ContainerOptionsParser();
+        const options = parser.parseRunOptions("contName", "imgName", `--env=FOO=bar --env=BAZ=qux`);
+
+        expect(options.Env).toEqual(["FOO=bar", "BAZ=qux"]);
+    });
+
     test("can parse --memory", () => {
         const parser = new ContainerOptionsParser();
 

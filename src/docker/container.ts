@@ -1,5 +1,5 @@
 import Dockerode, {type ContainerCreateOptions} from "dockerode";
-import type {ContainerWrapper, DockerWrapper} from "../lib";
+import {ContainerWrapper, DockerWrapper, splitAtFirst} from "../lib";
 import fs from "node:fs";
 
 export class DefaultContainer implements ContainerWrapper {
@@ -135,13 +135,18 @@ export class ContainerOptionsParser {
         options.AttachStdout = true;
         options.HostConfig = {};
         options.ExposedPorts = {};
+        options.Env = [];
 
         const runFlagsList = runFlags.split(" ");
         for (const runFlag of runFlagsList) {
-            const [flag, value] = runFlag.split("=");
+            const [flag, value] = splitAtFirst(runFlag, "=");
             switch (flag) {
                 case "--env-file": {
-                    options.Env = this.parseEnvFile(value);
+                    options.Env = [...(options.Env || []), ...this.parseEnvFile(value)];
+                    break
+                }
+                case "--env": {
+                    options.Env.push(value.trim());
                     break
                 }
                 case "--memory": {

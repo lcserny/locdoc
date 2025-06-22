@@ -41,6 +41,18 @@ class SpinnerConsoleTransport extends transports.Console {
     }
 }
 
+export function splitAtFirst(text: string, separator: string): [string, string] {
+    const index = text.indexOf(separator);
+    if (index === -1) {
+        // Separator not found, return the original string as the first part
+        return [text, ""];
+    } else {
+        const part1 = text.substring(0, index); // Or text.slice(0, index)
+        const part2 = text.substring(index + separator.length); // Or text.slice(index + separator.length)
+        return [part1, part2];
+    }
+}
+
 export function createLogger(args: OptionValues, spinner?: Ora) {
     return winston.createLogger({
         level: "info",
