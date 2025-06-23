@@ -1,12 +1,15 @@
-import Dockerode, {type ContainerCreateOptions} from "dockerode";
-import {ContainerWrapper, DockerWrapper, splitAtFirst} from "../lib";
-import fs from "node:fs";
+import * as fs from "node:fs";
+import type {ContainerWrapper, ContainerDeployDescriptor, DockerWrapper} from "../container";
+import type { ContainerCreateOptions } from "dockerode";
+// @ts-ignore stupid imports...
+import Dockerode from "dockerode";
+import type * as dockerode from "dockerode";
 
 export class DefaultContainer implements ContainerWrapper {
 
-    private container: Dockerode.Container;
+    private container: dockerode.Container;
 
-    constructor(container: Dockerode.Container) {
+    constructor(container: dockerode.Container) {
         this.container = container;
     }
 
@@ -36,9 +39,9 @@ export class DefaultDocker implements DockerWrapper {
         this.dockerode = new Dockerode();
     }
 
-    async createContainer(dockerContainer: string, dockerImage: string, convertedCmd: string): Promise<ContainerWrapper> {
+    async createContainer(dockerContainer: string, dockerImage: string, deployDescriptor: ContainerDeployDescriptor): Promise<ContainerWrapper> {
         const parser = new ContainerOptionsParser();
-        const options = parser.parseRunOptions(dockerContainer, dockerImage, convertedCmd);
+        const options = parser.parseRunOptions(dockerContainer, dockerImage, deployDescriptor);
         const newContainer = await this.dockerode.createContainer(options);
         return new DefaultContainer(newContainer);
     }
@@ -85,8 +88,8 @@ export class ContainerOptionsParser {
             throw new Error(`Environment file not found: ${envFilePath}`);
         }
         const envFile = fs.readFileSync(envFilePath, "utf8");
-        const envLines = envFile.split("\n").filter(line => line.trim() && !line.startsWith("#"));
-        return envLines.map(line => line.trim());
+        const envLines = envFile.split("\n").filter((line: string) => line.trim() && !line.startsWith("#"));
+        return envLines.map((line: string) => line.trim());
     }
 
     private parseMemory(memoryValue: string): number {
@@ -128,7 +131,7 @@ export class ContainerOptionsParser {
         return value;
     }
 
-    parseRunOptions(containerName: string, imageName: string, runFlags: string): ContainerCreateOptions {
+    parseRunOptions(containerName: string, imageName: string, deployDescriptor: ContainerDeployDescriptor): ContainerCreateOptions {
         const options: ContainerCreateOptions = {};
         options.name = containerName;
         options.Image = imageName;
@@ -137,46 +140,47 @@ export class ContainerOptionsParser {
         options.ExposedPorts = {};
         options.Env = [];
 
-        const runFlagsList = runFlags.split(" ");
-        for (const runFlag of runFlagsList) {
-            const [flag, value] = splitAtFirst(runFlag, "=");
-            switch (flag) {
-                case "--env-file": {
-                    options.Env = [...(options.Env || []), ...this.parseEnvFile(value)];
-                    break
-                }
-                case "--env": {
-                    options.Env.push(value.trim());
-                    break
-                }
-                case "--memory": {
-                    options.HostConfig.Memory = this.parseMemory(value);
-                    break;
-                }
-                case "--restart": {
-                    options.HostConfig.RestartPolicy = { Name: this.removeQuotes(value) };
-                    break;
-                }
-                case "--add-host": {
-                    if (!options.HostConfig.ExtraHosts) {
-                        options.HostConfig.ExtraHosts = [];
-                    }
-                    options.HostConfig.ExtraHosts.push(this.removeQuotes(value));
-                    break
-                }
-                case "--volume": {
-                    if (!options.HostConfig.Binds) {
-                        options.HostConfig.Binds = [];
-                    }
-                    options.HostConfig.Binds.push(this.removeQuotes(value));
-                    break;
-                }
-                case "--publish": {
-                    this.setPorts(options, value);
-                    break
-                }
-                default:
-                    throw new Error("Unsupported run flag: " + runFlag);
+        if (deployDescriptor.networkMode) {
+            options.HostConfig.NetworkMode = deployDescriptor.networkMode;
+        }
+
+        if (deployDescriptor.envFile) {
+            options.Env.push(...this.parseEnvFile(deployDescriptor.envFile));
+        }
+
+        if (deployDescriptor.env) {
+            options.Env.push(...deployDescriptor.env.map(env => env.trim()));
+        }
+
+        if (deployDescriptor.memLimit) {
+            options.HostConfig.Memory = this.parseMemory(deployDescriptor.memLimit);
+        }
+
+        if (deployDescriptor.restart) {
+            options.HostConfig.RestartPolicy = { Name: this.removeQuotes(deployDescriptor.restart) };
+        }
+
+        if (deployDescriptor.addHost) {
+            if (!options.HostConfig.ExtraHosts) {
+                options.HostConfig.ExtraHosts = [];
+            }
+            options.HostConfig.ExtraHosts.push(this.removeQuotes(deployDescriptor.addHost));
+        }
+
+        if (deployDescriptor.volumes) {
+            if (!options.HostConfig.Binds) {
+                options.HostConfig.Binds = [];
+            }
+            for (const volume of deployDescriptor.volumes) {
+                options.HostConfig.Binds.push(this.removeQuotes(volume));
+            }
+        }
+
+        if (deployDescriptor.ports) {
+            options.ExposedPorts = {};
+            options.HostConfig.PortBindings = {};
+            for (const port of deployDescriptor.ports) {
+                this.setPorts(options, port);
             }
         }
 

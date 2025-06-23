@@ -1,9 +1,35 @@
-import type {DockerWrapper, Git, Manifest} from "./lib";
+import type {Manifest} from "./lib";
 import {BaseDeployer, BaseManifest} from "./lib";
 import type {Logger} from "winston";
-import {DefaultDocker} from "./docker/container";
+import {DefaultDocker} from "./container/dockerode";
+import type {Git} from "./git";
 
 export const CONTAINER = "container";
+
+export interface ContainerWrapper {
+    start(): Promise<void>;
+    stop(): Promise<void>;
+    remove(): Promise<void>;
+
+    getStatus(): Promise<string>;
+}
+
+export interface DockerWrapper {
+    cleanup(): Promise<void>;
+
+    // eslint-disable-next-line no-unused-vars
+    createContainer(dockerContainer: string, dockerImage: string, deployDescriptor: ContainerDeployDescriptor): Promise<ContainerWrapper>
+    // eslint-disable-next-line no-unused-vars
+    getContainer(filterName: string): Promise<ContainerWrapper | undefined>
+
+    // eslint-disable-next-line no-unused-vars
+    networkExists(filterName: string): Promise<boolean>
+    // eslint-disable-next-line no-unused-vars
+    createNetwork(networkName: string): Promise<void>;
+
+    // eslint-disable-next-line no-unused-vars
+    buildImage(imageName: string, src: string[], context: string): Promise<void>;
+}
 
 export class ContainerDeployer extends BaseDeployer {
 
@@ -23,14 +49,16 @@ export class ContainerDeployer extends BaseDeployer {
         if (this.manifest.artifact.buildCmd) {
             await this.executeBuildCommand(artifactRepoDir);
         }
-        const dockerImage = await this.buildImage(artifactRepoDir);
-        const dockerNet = await this.createNetwork();
 
-        const dockerContainer = this.manifest.deploy.name;
-        await this.cleanExistingContainer(dockerContainer);
+        await this.buildImage(artifactRepoDir);
 
-        const runFlags = this.ensureNetwork(dockerNet);
-        await this.createContainer(artifactRepoDir, dockerContainer, runFlags, dockerImage);
+        await this.createNetwork();
+
+        await this.cleanExistingContainer();
+
+        this.handleDeployEnvFile(artifactRepoDir);
+
+        await this.createContainer(this.manifest.deploy.name, this.imageName());
 
         await this.cleanupBuild();
     }
@@ -39,25 +67,23 @@ export class ContainerDeployer extends BaseDeployer {
         await this.docker.cleanup();
     }
 
-    async createContainer(artifactRepoDir: string, dockerContainer: string, runFlags: string, dockerImage: string) {
+    private handleDeployEnvFile(artifactRepoDir: string) {
+        if (this.manifest.deploy.envFile) {
+            this.manifest.deploy.envFile = this.replaceRepoDir(artifactRepoDir, this.manifest.deploy.envFile);
+        }
+    }
+
+    async createContainer(dockerContainer: string, dockerImage: string) {
         this.logger.info(`Starting new docker container '${dockerContainer}'`);
 
-        const convertedCmd = this.replaceVars(runFlags, artifactRepoDir);
-        const newContainer = await this.docker.createContainer(dockerContainer, dockerImage, convertedCmd);
+        const newContainer = await this.docker.createContainer(dockerContainer, dockerImage, this.manifest.deploy);
         newContainer.start()
             .then(() => this.logger.info("Container started successfully"))
             .catch(err => this.logger.error("Error starting container:", err));
     }
 
-    ensureNetwork(dockerNet: string) {
-        let runFlags: string = this.manifest.deploy.runFlags;
-        if (!runFlags.includes("--network") && dockerNet) {
-            runFlags += ` --network=${dockerNet}`;
-        }
-        return runFlags;
-    }
-
-    async cleanExistingContainer(dockerContainer: string) {
+    async cleanExistingContainer() {
+        const dockerContainer = this.manifest.deploy.name;
         const container = await this.docker.getContainer(dockerContainer);
         if (container) {
             this.logger.info(`Existing container found '${dockerContainer}'`);
@@ -73,7 +99,7 @@ export class ContainerDeployer extends BaseDeployer {
     }
 
     async createNetwork() {
-        const dockerNet = this.manifest.deploy.network;
+        const dockerNet = this.manifest.deploy.networkMode;
         if (dockerNet) {
             const networkExists = await this.docker.networkExists(dockerNet);
             if (!networkExists) {
@@ -81,22 +107,37 @@ export class ContainerDeployer extends BaseDeployer {
                 await this.docker.createNetwork(dockerNet);
             }
         }
-        return dockerNet;
     }
 
     async buildImage(artifactRepoDir: string) {
         this.logger.info("Building Docker image");
-        const dockerImage = `${this.manifest.image.name}:${this.manifest.image.version}`;
-        await this.docker.buildImage(dockerImage, [".", this.manifest.artifact.dockerFile], artifactRepoDir);
-        return dockerImage;
+        await this.docker.buildImage(this.imageName(), [".", this.manifest.artifact.dockerFile], artifactRepoDir);
     }
+
+    private imageName() {
+        return `${this.manifest.image.name}:${this.manifest.image.version}`;
+    }
+}
+
+export interface ContainerDeployDescriptor {
+    networkMode?: string;
+    envFile?: string;
+    env?: string[];
+    memLimit?: string;
+    restart?: string;
+    addHost?: string;
+    volumes?: string[];
+    ports?: string[];
 }
 
 export class ContainerManifest extends BaseManifest {
     artifact = {repo: "", tag: "master", dockerFile: "Dockerfile", buildCmd: ""};
     config = {repo: "", tag: "master", destinationPath: ""};
     image = {name: "", version: "1.0"};
-    deploy = {type: CONTAINER, name: "", network: "", runFlags: ""};
+    deploy: ContainerDeployDescriptor & {type: string, name: string} = {
+        type: CONTAINER,
+        name: ""
+    };
 
     constructor(randomName: string) {
         super(randomName);

@@ -2,7 +2,8 @@ import winston from "winston";
 import fs from "node:fs/promises";
 import tmp from "tmp-promise";
 import path from "node:path";
-import type {ContainerWrapper, DockerWrapper, Git} from "./lib";
+import type {Git} from "./git";
+import type {ContainerWrapper, DockerWrapper} from "./container";
 
 const { combine, timestamp, prettyPrint, errors } = winston.format;
 

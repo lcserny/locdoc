@@ -1,9 +1,11 @@
 import {NODEJS_CLI, NodeJSCliDeployer} from "./nodejs-cli";
+import type { DockerWrapper} from "./container";
 import {ContainerDeployer} from "./container";
 import {SYSTEMD, SystemDDeployer} from "./systemd";
 import * as os from "node:os";
 import type {Logger} from "winston";
-import type {Deployer, DockerWrapper, Git, Manifest} from "./lib";
+import type {Deployer, Manifest} from "./lib";
+import type {Git} from "./git";
 
 export class DeployRetriever {
 

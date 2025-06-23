@@ -1,7 +1,5 @@
 import path from "node:path";
 import fs from "node:fs/promises";
-import type {SimpleGit} from "simple-git";
-import simpleGit from "simple-git";
 import util from "node:util";
 import child_process from "node:child_process";
 import type {Logger} from "winston";
@@ -11,6 +9,8 @@ import type {SystemDDeployer, SystemDManifest} from "./systemd";
 import type {ContainerDeployer, ContainerManifest} from "./container";
 import type {Ora} from "ora";
 import type {OptionValues} from "commander";
+import {DefaultGit} from "./git/simple-git";
+import type {Git} from "./git";
 
 const { combine, timestamp, prettyPrint, printf, errors } = winston.format;
 
@@ -79,45 +79,6 @@ export type Manifest = NodeJSCliManifest | SystemDManifest | ContainerManifest;
 
 export type Deployer = NodeJSCliDeployer | SystemDDeployer | ContainerDeployer;
 
-export interface Git {
-    // eslint-disable-next-line no-unused-vars
-    clone(repo: string, path: string, branch?: string): Promise<void>;
-}
-
-class DefaultGit implements Git {
-    private git: SimpleGit = simpleGit();
-
-    async clone(repo: string, path: string, branch?: string) {
-        const options = branch ? {"--branch": branch} : undefined;
-        await this.git.clone(repo, path, options);
-    }
-}
-
-export interface ContainerWrapper {
-    start(): Promise<void>;
-    stop(): Promise<void>;
-    remove(): Promise<void>;
-
-    getStatus(): Promise<string>;
-}
-
-export interface DockerWrapper {
-    cleanup(): Promise<void>;
-
-    // eslint-disable-next-line no-unused-vars
-    createContainer(dockerContainer: string, dockerImage: string, convertedCmd: string): Promise<ContainerWrapper>
-    // eslint-disable-next-line no-unused-vars
-    getContainer(filterName: string): Promise<ContainerWrapper | undefined>
-
-    // eslint-disable-next-line no-unused-vars
-    networkExists(filterName: string): Promise<boolean>
-    // eslint-disable-next-line no-unused-vars
-    createNetwork(networkName: string): Promise<void>;
-
-    // eslint-disable-next-line no-unused-vars
-    buildImage(imageName: string, src: string[], context: string): Promise<void>;
-}
-
 export class BaseManifest {
     protected name: string;
     
@@ -169,8 +130,11 @@ export class BaseDeployer {
         return configRepoDir;
     }
 
-    protected replaceVars(cmd: string, artifactRepoDir: string): string {
-        return cmd.replace("${repoDir}", artifactRepoDir);
+    protected replaceRepoDir(artifactRepoDir: string, text?: string): string | undefined {
+        if (text) {
+            return text.replace("${repoDir}", artifactRepoDir);
+        }
+        return text;
     }
 
     async executeBuildCommand(artifactRepoDir: string) {

@@ -1,9 +1,10 @@
 import path from "node:path";
-import type {Git, Manifest} from "./lib";
+import type {Manifest} from "./lib";
 import {BaseDeployer, BaseManifest, exec} from "./lib";
 import fs from "node:fs/promises";
 import os from "node:os";
 import type {Logger} from "winston";
+import type {Git} from "./git";
 
 export const SYSTEMD = "systemd";
 
@@ -63,7 +64,7 @@ export class SystemDDeployer extends BaseDeployer {
         this.logger.info("Creating systemd service file");
         let contents = await fs.readFile(this.templatePath, "utf8");
         contents = contents.replace(NAME_KEY, this.manifest.deploy.name);
-        contents = contents.replace(EXE_KEY, this.replaceVars(`${this.manifest.deploy.cmdPrefix} ${this.manifest.deploy.preRunFlags} ${this.manifest.deploy.path} ${this.manifest.deploy.postRunFlags}`, artifactRepoDir));
+        contents = contents.replace(EXE_KEY, this.replaceRepoDir(artifactRepoDir, `${this.manifest.deploy.cmdPrefix} ${this.manifest.deploy.preRunFlags} ${this.manifest.deploy.path} ${this.manifest.deploy.postRunFlags}`)!);
 
         await fs.mkdir(servicePath, { recursive: true });
         await fs.writeFile(path.join(servicePath, serviceName), contents);
