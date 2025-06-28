@@ -41,14 +41,14 @@ describe("container parser", () => {
         expect(options.HostConfig?.RestartPolicy?.Name).toEqual("always");
     });
 
-    test("can parse --add-host", () => {
+    test("can parse --add-hosts", () => {
         const parser = new ContainerOptionsParser();
 
-        let options = parser.parseRunOptions("contName", "imgName", { addHost: "leo:somewhere" });
+        let options = parser.parseRunOptions("contName", "imgName", { addHosts: ["leo:somewhere"] });
         expect(options.HostConfig?.ExtraHosts?.length).toEqual(1);
         expect(options.HostConfig?.ExtraHosts[0]).toEqual("leo:somewhere");
 
-        options = parser.parseRunOptions("contName", "imgName", { addHost: "leo:somewhere" });
+        options = parser.parseRunOptions("contName", "imgName", { addHosts: ["leo:somewhere"] });
         expect(options.HostConfig?.ExtraHosts?.length).toEqual(1);
         expect(options.HostConfig?.ExtraHosts[0]).toEqual("leo:somewhere");
     });

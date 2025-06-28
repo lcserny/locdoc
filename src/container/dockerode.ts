@@ -160,11 +160,13 @@ export class ContainerOptionsParser {
             options.HostConfig.RestartPolicy = { Name: this.removeQuotes(deployDescriptor.restart) };
         }
 
-        if (deployDescriptor.addHost) {
+        if (deployDescriptor.addHosts) {
             if (!options.HostConfig.ExtraHosts) {
                 options.HostConfig.ExtraHosts = [];
             }
-            options.HostConfig.ExtraHosts.push(this.removeQuotes(deployDescriptor.addHost));
+            for (const host of deployDescriptor.addHosts) {
+                options.HostConfig.ExtraHosts.push(this.removeQuotes(host));
+            }
         }
 
         if (deployDescriptor.volumes) {

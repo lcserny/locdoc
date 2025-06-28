@@ -125,7 +125,7 @@ export interface ContainerDeployDescriptor {
     env?: string[];
     memLimit?: string;
     restart?: string;
-    addHost?: string;
+    addHosts?: string[];
     volumes?: string[];
     ports?: string[];
 }
