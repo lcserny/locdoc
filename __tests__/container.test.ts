@@ -1,6 +1,6 @@
 import {createFakeContainer, createFakeDocker, createFakeGit, logger} from "../src/test-util";
 import {ContainerDeployer} from "../src/container";
-import tmp from "tmp-promise";
+import * as tmp from "tmp-promise";
 import path from "node:path";
 import fs from "node:fs/promises";
 import type {Manifest} from "../src/lib";
@@ -45,9 +45,9 @@ describe("container deployer", () => {
             await deployer.createNetwork();
 
             expect(docker.networkExists).toHaveBeenCalledTimes(1);
-            expect(docker.networkExists).toHaveBeenCalledWith(manifest.deploy.network);
+            expect(docker.networkExists).toHaveBeenCalledWith(manifest.deploy.networkMode);
             expect(docker.createNetwork).toHaveBeenCalledTimes(1);
-            expect(docker.createNetwork).toHaveBeenCalledWith(manifest.deploy.network);
+            expect(docker.createNetwork).toHaveBeenCalledWith(manifest.deploy.networkMode);
 
             const container = createFakeContainer();
             docker.getContainer = jest.fn().mockImplementationOnce(() => {
@@ -79,7 +79,7 @@ describe("container deployer", () => {
             expect(docker.createContainer).toHaveBeenCalledWith(
                 expect.stringContaining(manifest.deploy.name),
                 expect.stringContaining(dockerImage),
-                expect.stringContaining(manifest.deploy)
+                expect.objectContaining(manifest.deploy)
             );
             expect(container.start).toHaveBeenCalledTimes(1);
 
