@@ -1,6 +1,7 @@
 import Dockerode, {type ContainerCreateOptions} from "dockerode";
-import {ContainerWrapper, DockerWrapper, splitAtFirst} from "../lib";
+import {splitAtFirst} from "../lib";
 import fs from "node:fs";
+import {ContainerWrapper, DockerWrapper} from "../../api/container";
 
 export class DefaultContainer implements ContainerWrapper {
 

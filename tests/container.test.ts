@@ -1,9 +1,8 @@
 import {createFakeContainer, createFakeDocker, createFakeGit, logger} from "../src/lib/test-util";
-import {ContainerDeployer} from "../src/lib/container";
+import {ContainerDeployer, ContainerManifest} from "../src/lib/container";
 import tmp from "tmp-promise";
 import path from "node:path";
 import fs from "node:fs/promises";
-import type {Manifest} from "../src/lib/lib";
 
 describe("container deployer", () => {
     test("deployer deploys correctly", async () => {
@@ -24,7 +23,7 @@ describe("container deployer", () => {
             };
 
             const docker = createFakeDocker();
-            const deployer = new ContainerDeployer(d.path, manifest as Manifest, logger, docker, createFakeGit());
+            const deployer = new ContainerDeployer(d.path, manifest as ContainerManifest, logger, docker, createFakeGit());
 
             const baseName = "myRepo";
             const artifactRepoDir = path.join(d.path, baseName)

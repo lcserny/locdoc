@@ -1,7 +1,8 @@
-import type {DockerWrapper, Git, Manifest} from "./lib";
-import {BaseDeployer, BaseManifest} from "./lib";
 import type {Logger} from "winston";
-import {DefaultDocker} from "./container/dockerode";
+import {BaseDeployer} from "../api/deploy";
+import {BaseManifest} from "../api/manifest";
+import {DockerWrapper} from "../api/container";
+import {Git} from "../api/vcs";
 
 export const CONTAINER = "container";
 
@@ -11,9 +12,9 @@ export class ContainerDeployer extends BaseDeployer {
 
     private docker: DockerWrapper;
 
-    constructor(workDir: string, manifest: Manifest, logger: Logger, docker: DockerWrapper = new DefaultDocker(), git?: Git) {
+    constructor(workDir: string, manifest: ContainerManifest, logger: Logger, docker: DockerWrapper, git: Git) {
         super(logger, workDir, manifest, git);
-        this.manifest = manifest as ContainerManifest;
+        this.manifest = manifest;
         this.docker = docker;
     }
 

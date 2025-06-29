@@ -8,6 +8,8 @@ import fs from "node:fs/promises";
 import {DeployRetriever} from "./lib/deploy";
 import {createLogger, getRandomNumberAsString} from "./lib/lib";
 import ora from "ora";
+import {DefaultDocker} from "./lib/container/dockerode";
+import {DefaultGit} from "./lib/vcs/simplegit";
 
 program
     .name("locdoc")
@@ -34,7 +36,7 @@ async function main() {
         const workDir = path.join(os.homedir(), "tmp", getRandomNumberAsString(10000, 99999))
         logger.info(`Creating workdir '${workDir}'`);
 
-        const deployRetriever = new DeployRetriever(manifest.deploy?.type, workDir, manifest, logger);
+        const deployRetriever = new DeployRetriever(manifest.deploy?.type, workDir, manifest, logger, new DefaultGit(), new DefaultDocker());
         const deployer = deployRetriever.getDeployer();
         await deployer.deploy();
 

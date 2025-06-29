@@ -1,10 +1,9 @@
 import {createFakeGit, logger} from "../src/lib/test-util";
-import {NodeJSCliDeployer} from "../src/lib/nodejs-cli";
+import {NodeJSCliDeployer, NodeJSCliManifest} from "../src/lib/nodejs-cli";
 import path from "node:path";
 import fse from "fs-extra";
 import fs from "node:fs/promises";
 import tmp from "tmp-promise";
-import type {Manifest} from "../src/lib/lib";
 
 describe("nodejs-cli deployer", () => {
     test("deployer deploys correctly", async () => {
@@ -23,7 +22,7 @@ describe("nodejs-cli deployer", () => {
             const artifactRepoDir = path.join(d.path, baseName)
             await fs.mkdir(artifactRepoDir, {recursive: true});
 
-            const deployer = new NodeJSCliDeployer(d.path, manifest as Manifest, logger, createFakeGit());
+            const deployer = new NodeJSCliDeployer(d.path, manifest as NodeJSCliManifest, logger, createFakeGit());
 
             expect(await fse.pathExists(artifactRepoDir)).toBeTruthy();
             const newArtifactPath = await deployer.moveCli(artifactRepoDir);

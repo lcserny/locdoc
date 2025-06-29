@@ -11,6 +11,8 @@ describe("manifestParser", () => {
 
     test("using minimal yaml, parse should give back correct manifest", async () => {
         const minimalContainerManifest = `
+deploy:
+    type: container
 artifact:
     repo: "someGitRepo"
 config:

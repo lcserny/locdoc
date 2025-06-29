@@ -1,18 +1,20 @@
 import path from "node:path";
 import fs from "node:fs/promises";
-import type {Git, Manifest} from "./lib";
-import {BaseDeployer, BaseManifest, symlinkExists} from "./lib";
+import {symlinkExists} from "./lib";
 import fse from "fs-extra";
 import type {Logger} from "winston";
+import {BaseDeployer} from "../api/deploy";
+import {BaseManifest} from "../api/manifest";
+import {Git} from "../api/vcs";
 
 export const NODEJS_CLI = "nodejs-cli";
 
-export class NodeJSCliDeployer extends BaseDeployer{
+export class NodeJSCliDeployer extends BaseDeployer {
     protected manifest: NodeJSCliManifest;
 
-    constructor(workDir: string, manifest: Manifest, logger: Logger, git?: Git) {
+    constructor(workDir: string, manifest: NodeJSCliManifest, logger: Logger, git: Git) {
         super(logger, workDir, manifest, git);
-        this.manifest = manifest as NodeJSCliManifest;
+        this.manifest = manifest;
     }
 
     async deploy() {

@@ -1,9 +1,11 @@
 import path from "node:path";
-import type {Git, Manifest} from "./lib";
-import {BaseDeployer, BaseManifest, exec} from "./lib";
+import {exec} from "./lib";
 import fs from "node:fs/promises";
 import os from "node:os";
 import type {Logger} from "winston";
+import {BaseDeployer} from "../api/deploy";
+import {BaseManifest} from "../api/manifest";
+import {Git} from "../api/vcs";
 
 export const SYSTEMD = "systemd";
 
@@ -14,9 +16,9 @@ export class SystemDDeployer extends BaseDeployer {
     private readonly templatePath: string;
     protected manifest: SystemDManifest;
     
-    constructor(workDir: string, manifest: Manifest, logger: Logger, git?: Git, templatePath?: string) {
+    constructor(workDir: string, manifest: SystemDManifest, logger: Logger, git: Git, templatePath?: string) {
         super(logger, workDir, manifest, git);
-        this.manifest = manifest as SystemDManifest;
+        this.manifest = manifest;
         this.templatePath = templatePath || path.join(__dirname, "..", "..", "resources", "templates", "systemd_basic");
     }
 
