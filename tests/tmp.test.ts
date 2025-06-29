@@ -1,7 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import fse from "fs-extra";
-import {createFiles} from "../src/test-util";
+import {createFiles} from "../src/lib/test-util";
 import tmp from "tmp-promise";
 
 describe("tmp util tests", () => {

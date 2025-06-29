@@ -17,7 +17,7 @@ export class SystemDDeployer extends BaseDeployer {
     constructor(workDir: string, manifest: Manifest, logger: Logger, git?: Git, templatePath?: string) {
         super(logger, workDir, manifest, git);
         this.manifest = manifest as SystemDManifest;
-        this.templatePath = templatePath || path.join(__dirname, "..", "resources", "templates", "systemd_basic");
+        this.templatePath = templatePath || path.join(__dirname, "..", "..", "resources", "templates", "systemd_basic");
     }
 
     async deploy() {

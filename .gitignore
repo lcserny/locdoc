@@ -129,6 +129,6 @@ dist
 .yarn/install-state.gz
 .pnp.*
 
-lib
 *.log.*
-build
+build/
+dist/

@@ -1,10 +1,10 @@
-import {createFakeGit, logger} from "../src/test-util";
-import {NodeJSCliDeployer} from "../src/nodejs-cli";
+import {createFakeGit, logger} from "../src/lib/test-util";
+import {NodeJSCliDeployer} from "../src/lib/nodejs-cli";
 import path from "node:path";
 import fse from "fs-extra";
 import fs from "node:fs/promises";
 import tmp from "tmp-promise";
-import type {Manifest} from "../src/lib";
+import type {Manifest} from "../src/lib/lib";
 
 describe("nodejs-cli deployer", () => {
     test("deployer deploys correctly", async () => {

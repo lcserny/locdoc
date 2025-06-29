@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 
 import {program} from "commander";
-import {ManifestParser} from "../manifest";
+import {ManifestParser} from "./lib/manifest";
 import path from "node:path";
 import os from "node:os";
 import fs from "node:fs/promises";
-import {DeployRetriever} from "../deploy";
-import {createLogger, getRandomNumberAsString} from "../lib";
+import {DeployRetriever} from "./lib/deploy";
+import {createLogger, getRandomNumberAsString} from "./lib/lib";
 import ora from "ora";
 
 program

@@ -1,13 +1,13 @@
-import {DeployRetriever} from "../src/deploy";
-import {createFakeGit, logger} from "../src/test-util";
-import {CONTAINER, ContainerDeployer, ContainerManifest} from "../src/container";
-import {NODEJS_CLI, NodeJSCliDeployer, NodeJSCliManifest} from "../src/nodejs-cli";
-import type { Manifest} from "../src/lib";
-import {BaseDeployer} from "../src/lib";
+import {DeployRetriever} from "../src/lib/deploy";
+import {createFakeGit, logger} from "../src/lib/test-util";
+import {CONTAINER, ContainerDeployer, ContainerManifest} from "../src/lib/container";
+import {NODEJS_CLI, NodeJSCliDeployer, NodeJSCliManifest} from "../src/lib/nodejs-cli";
+import type { Manifest} from "../src/lib/lib";
+import {BaseDeployer} from "../src/lib/lib";
 import path from "node:path";
 import fse from "fs-extra";
 import tmp from "tmp-promise";
-import {SYSTEMD, SystemDDeployer, SystemDManifest} from "../src/systemd";
+import {SYSTEMD, SystemDDeployer, SystemDManifest} from "../src/lib/systemd";
 import os from "node:os";
 
 describe("deployRetriever", () => {

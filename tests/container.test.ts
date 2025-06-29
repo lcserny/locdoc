@@ -1,9 +1,9 @@
-import {createFakeContainer, createFakeDocker, createFakeGit, logger} from "../src/test-util";
-import {ContainerDeployer} from "../src/container";
+import {createFakeContainer, createFakeDocker, createFakeGit, logger} from "../src/lib/test-util";
+import {ContainerDeployer} from "../src/lib/container";
 import tmp from "tmp-promise";
 import path from "node:path";
 import fs from "node:fs/promises";
-import type {Manifest} from "../src/lib";
+import type {Manifest} from "../src/lib/lib";
 
 describe("container deployer", () => {
     test("deployer deploys correctly", async () => {

@@ -1,4 +1,4 @@
-import {ContainerOptionsParser} from "../../src/docker/container";
+import {ContainerOptionsParser} from "../../src/lib/docker/container";
 import tmp from "tmp-promise";
 import fs from "node:fs/promises";
 

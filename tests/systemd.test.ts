@@ -1,10 +1,10 @@
-import {createFakeGit, logger} from "../src/test-util";
+import {createFakeGit, logger} from "../src/lib/test-util";
 import tmp from "tmp-promise";
 import path from "node:path";
 import fs from "node:fs/promises";
-import {SystemDDeployer} from "../src/systemd";
+import {SystemDDeployer} from "../src/lib/systemd";
 import fse from "fs-extra";
-import type {Manifest} from "../src/lib";
+import type {Manifest} from "../src/lib/lib";
 
 describe("systemD deployer", () => {
     test("deployer deploys correctly", async () => {

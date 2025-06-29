@@ -1,10 +1,10 @@
-import {ManifestParser} from "../src/manifest";
-import {logger} from "../src/test-util";
+import {ManifestParser} from "../src/lib/manifest";
+import {logger} from "../src/lib/test-util";
 import tmp from "tmp-promise";
 import fs from "node:fs/promises";
-import type {ContainerManifest} from "../src/container";
-import type {NodeJSCliManifest} from "../src/nodejs-cli";
-import type {SystemDManifest} from "../src/systemd";
+import type {ContainerManifest} from "../src/lib/container";
+import type {NodeJSCliManifest} from "../src/lib/nodejs-cli";
+import type {SystemDManifest} from "../src/lib/systemd";
 
 describe("manifestParser", () => {
     const parser = new ManifestParser(logger, "someName");
