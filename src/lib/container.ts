@@ -1,7 +1,7 @@
 import type {DockerWrapper, Git, Manifest} from "./lib";
 import {BaseDeployer, BaseManifest} from "./lib";
 import type {Logger} from "winston";
-import {DefaultDocker} from "./docker/container";
+import {DefaultDocker} from "./container/dockerode";
 
 export const CONTAINER = "container";
 
