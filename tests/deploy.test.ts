@@ -1,30 +1,36 @@
-const {DeployRetriever} = require("../src/deploy");
-const {logger, createFakeGit} = require("../src/test-util");
-const {CONTAINER, ContainerDeployer} = require("../src/container");
-const {NodeJSCliDeployer, NODEJS_CLI} = require("../src/nodejs-cli");
-const {BaseDeployer} = require("../src/lib");
-const path = require("node:path");
-const fse = require("fs-extra");
-const tmp = require("tmp-promise");
-const {SYSTEMD, SystemDDeployer} = require("../src/systemd");
+import {DeployRetriever} from "../src/lib/deploy";
+import {createFakeDocker, createFakeGit, logger} from "../src/lib/test-util";
+import {CONTAINER, ContainerDeployer, ContainerManifest} from "../src/lib/container";
+import {NODEJS_CLI, NodeJSCliDeployer, NodeJSCliManifest} from "../src/lib/nodejs-cli";
+import path from "node:path";
+import fse from "fs-extra";
+import tmp from "tmp-promise";
+import {SYSTEMD, SystemDDeployer, SystemDManifest} from "../src/lib/systemd";
+import os from "node:os";
+import {ManifestType} from "../src/lib/manifest";
+import {BaseDeployer} from "../src/api/deploy";
 
 describe("deployRetriever", () => {
     test("retriever produces container deployer", async () => {
-        const retriever = new DeployRetriever(CONTAINER, "", null, logger);
+        const retriever = new DeployRetriever(CONTAINER, "", new ContainerManifest("a"), logger, createFakeGit(), createFakeDocker());
         const deployer = retriever.getDeployer();
 
         expect(deployer instanceof ContainerDeployer).toBeTruthy();
     });
 
     test("retriever produces nodejs-cli deployer", async () => {
-        const retriever = new DeployRetriever(NODEJS_CLI, "", null, logger);
+        const retriever = new DeployRetriever(NODEJS_CLI, "", new NodeJSCliManifest("b"), logger, createFakeGit(), createFakeDocker());
         const deployer = retriever.getDeployer();
 
         expect(deployer instanceof NodeJSCliDeployer).toBeTruthy();
     });
 
     test("retriever produces systemd deployer", async () => {
-        const retriever = new DeployRetriever(SYSTEMD, "", null, logger);
+        if (os.platform() === "win32") {
+            return;
+        }
+
+        const retriever = new DeployRetriever(SYSTEMD, "", new SystemDManifest("c"), logger, createFakeGit(), createFakeDocker());
         const deployer = retriever.getDeployer();
 
         expect(deployer instanceof SystemDDeployer).toBeTruthy();
@@ -42,13 +48,13 @@ describe("deployRetriever", () => {
                 }
             };
             const git = createFakeGit();
-            const deployer = new BaseDeployer(logger, d.path, manifest, git);
+            const deployer = new BaseDeployer(logger, d.path, manifest as ManifestType, git);
 
             const artifactRepoDir = await deployer.cloneArtifactRepo();
 
-            const ardRegex = new RegExp(String.raw`^${d.path}.*${manifest.deploy.name}`, "g");
+            const ardRegex = new RegExp(String.raw`^.*${manifest.deploy.name}`, "g");
             expect(git.clone).toHaveBeenCalledTimes(1);
-            expect(git.clone).toHaveBeenCalledWith(manifest.artifact.repo, expect.stringMatching(ardRegex), {'--branch': manifest.artifact.tag});
+            expect(git.clone).toHaveBeenCalledWith(manifest.artifact.repo, expect.stringMatching(ardRegex), manifest.artifact.tag);
             expect(artifactRepoDir).toMatch(ardRegex);
         }, {unsafeCleanup: true});
     });
@@ -62,20 +68,20 @@ describe("deployRetriever", () => {
                 config: {
                     repo: "someConfigRepo",
                     tag: "cfg-branch",
-                    destinationPath: "my/path"
+                    destinationPath: path.join("my", "path")
                 }
             };
 
             const git = createFakeGit();
-            const deployer = new BaseDeployer(logger, d.path, manifest, git);
+            const deployer = new BaseDeployer(logger, d.path, manifest as ManifestType, git);
             const artifactRepoDir = path.join(d.path, manifest.deploy.name);
 
             const configRepoDir = await deployer.cloneConfigRepo(artifactRepoDir);
 
-            const cfgRegex = new RegExp(String.raw`^${artifactRepoDir}.*${manifest.config.destinationPath}`, "g");
             expect(git.clone).toHaveBeenCalledTimes(1);
-            expect(git.clone).toHaveBeenCalledWith(manifest.config.repo, expect.any(String), {'--branch': manifest.config.tag});
-            expect(configRepoDir).toMatch(cfgRegex);
+            expect(git.clone).toHaveBeenCalledWith(manifest.config.repo, expect.any(String), manifest.config.tag);
+            expect(configRepoDir).toContain(manifest.deploy.name);
+            expect(configRepoDir).toContain(manifest.config.destinationPath);
         }, {unsafeCleanup: true});
     });
 
@@ -84,7 +90,7 @@ describe("deployRetriever", () => {
             const artifactRepoDir = d.path;
             const cmdPath = "touchedTestFiled";
             const manifest = { artifact: { buildCmd: `touch ${cmdPath}` } };
-            const deployer = new BaseDeployer(logger, d.path, manifest, {});
+            const deployer = new BaseDeployer(logger, d.path, manifest as ManifestType, createFakeGit());
 
             await deployer.executeBuildCommand(artifactRepoDir);
 

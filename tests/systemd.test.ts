@@ -1,9 +1,9 @@
-const {logger, createFakeGit} = require("../src/test-util");
-const tmp = require("tmp-promise");
-const path = require("node:path");
-const fs = require("node:fs/promises");
-const {SystemDDeployer} = require("../src/systemd");
-const fse = require("fs-extra");
+import {createFakeGit, logger} from "../src/lib/test-util";
+import tmp from "tmp-promise";
+import path from "node:path";
+import fs from "node:fs/promises";
+import {SystemDDeployer, SystemDManifest} from "../src/lib/systemd";
+import fse from "fs-extra";
 
 describe("systemD deployer", () => {
     test("deployer deploys correctly", async () => {
@@ -28,7 +28,7 @@ describe("systemD deployer", () => {
                 }
             };
 
-            const deployer = new SystemDDeployer(d.path, manifest, logger, createFakeGit());
+            const deployer = new SystemDDeployer(d.path, manifest as SystemDManifest, logger, createFakeGit());
 
             const serviceName = `${manifest.deploy.name}.service`;
             await fs.writeFile(path.join(d.path, "app.js"), "data here", "utf8");
@@ -38,7 +38,7 @@ describe("systemD deployer", () => {
             expect(fse.pathExistsSync(manifest.deploy.path)).toBeTruthy();
 
             expect(fse.pathExistsSync(path.join(d.path, serviceName))).toBeFalsy();
-            await deployer.createSystemDFile(d.path, serviceName);
+            await deployer.createSystemDFile(d.path, serviceName, d.path);
             expect(fse.pathExistsSync(path.join(d.path, serviceName))).toBeTruthy();
             const serviceFileContents = await fs.readFile(path.join(d.path, serviceName), "utf8");
             expect(serviceFileContents.includes(manifest.deploy.name)).toBeTruthy();

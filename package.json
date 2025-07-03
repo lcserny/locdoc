@@ -1,37 +1,46 @@
 {
-    "name": "locdoc",
-    "version": "1.0.0",
-    "description": "",
-    "main": "src/main.js",
-    "scripts": {
-        "test": "jest",
-        "build": "babel src -d lib"
-    },
-    "bin": {
-        "locdoc": "./src/bin/locdoc.js"
-    },
-    "jest": {
-        "testTimeout": 30000
-    },
-    "author": "",
-    "license": "ISC",
-    "devDependencies": {
-        "@babel/cli": "^7.24.7",
-        "@babel/core": "^7.23.9",
-        "@babel/eslint-parser": "^7.23.10",
-        "@babel/preset-env": "^7.23.9",
-        "@types/jest": "^29.5.12",
-        "eslint": "^8.56.0",
-        "jest": "^29.7.0",
-        "tmp-promise": "^3.0.3"
-    },
-    "dependencies": {
-        "commander": "^12.1.0",
-        "docker-cli-js": "^2.10.0",
-        "fs-extra": "^11.2.0",
-        "lodash": "^4.17.21",
-        "simple-git": "^3.24.0",
-        "winston": "^3.13.0",
-        "yaml": "^2.4.0"
-    }
+  "name": "locdoc",
+  "version": "0.1.0",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "locdoc": "dist/locdoc.js"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "jest --coverage",
+    "lint": "eslint . --ext .ts,.tsx",
+    "clean": "rimraf dist coverage",
+    "start": "ts-node src/index.ts",
+    "dev": "ts-node-dev --respawn --transpile-only src/index.ts"
+  },
+  "dependencies": {
+    "commander": "^12.1.0",
+    "dockerode": "^4.0.6",
+    "fs-extra": "^11.2.0",
+    "lodash": "^4.17.21",
+    "ora": "^5.4.1",
+    "simple-git": "^3.24.0",
+    "winston": "^3.13.0",
+    "yaml": "^2.4.0"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.0",
+    "@typescript-eslint/eslint-plugin": "^6.3.0",
+    "@typescript-eslint/parser": "^6.3.0",
+    "@types/lodash": "^4.17.7",
+    "@types/node": "^20.14.11",
+    "@types/ora": "^3.2.0",
+    "@types/fs-extra": "^11.0.4",
+    "@types/dockerode": "^3.3.39",
+    "eslint": "^8.46.0",
+    "eslint-plugin-jest": "^27.4.0",
+    "jest": "^29.6.0",
+    "tmp-promise": "^3.0.3",
+    "rimraf": "^5.0.0",
+    "ts-node": "^10.9.1",
+    "ts-node-dev": "^2.0.0",
+    "ts-jest": "^29.1.1",
+    "typescript": "^5.2.2"
+  }
 }

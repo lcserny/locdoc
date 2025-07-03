@@ -1,8 +1,8 @@
-const fs = require("node:fs/promises");
-const path = require("node:path");
-const fse = require("fs-extra");
-const {createFiles} = require("../src/test-util");
-const tmp = require("tmp-promise");
+import fs from "node:fs/promises";
+import path from "node:path";
+import fse from "fs-extra";
+import {createFiles} from "../src/lib/test-util";
+import tmp from "tmp-promise";
 
 describe("tmp util tests", () => {
     test("creating tmp dir without any files", async () => {
@@ -12,7 +12,7 @@ describe("tmp util tests", () => {
     });
 
     test("creating tmp dir with files", async () => {
-        const filesMap = new Map();
+        const filesMap: Map<string, string> = new Map();
         filesMap.set("f1.json", `["hello"]`);
         filesMap.set("f2.yml", `some: test`);
 
