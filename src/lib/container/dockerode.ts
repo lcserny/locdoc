@@ -1,7 +1,6 @@
 import Dockerode, {type ContainerCreateOptions} from "dockerode";
-import {splitAtFirst} from "../lib";
 import fs from "node:fs";
-import {ContainerWrapper, DockerWrapper} from "../../api/container";
+import {ContainerWrapper, ContainerDeploy, DockerWrapper} from "../../api/container";
 
 export class DefaultContainer implements ContainerWrapper {
 
@@ -37,9 +36,9 @@ export class DefaultDocker implements DockerWrapper {
         this.dockerode = new Dockerode();
     }
 
-    async createContainer(dockerContainer: string, dockerImage: string, convertedCmd: string): Promise<ContainerWrapper> {
+    async createContainer(dockerImage: string, deploy: ContainerDeploy): Promise<ContainerWrapper> {
         const parser = new ContainerOptionsParser();
-        const options = parser.parseRunOptions(dockerContainer, dockerImage, convertedCmd);
+        const options = parser.parseRunOptions(dockerImage, deploy);
         const newContainer = await this.dockerode.createContainer(options);
         return new DefaultContainer(newContainer);
     }
@@ -129,55 +128,46 @@ export class ContainerOptionsParser {
         return value;
     }
 
-    parseRunOptions(containerName: string, imageName: string, runFlags: string): ContainerCreateOptions {
+    parseRunOptions(imageName: string, deploy: ContainerDeploy): ContainerCreateOptions {
         const options: ContainerCreateOptions = {};
-        options.name = containerName;
+        options.name = deploy.name;
         options.Image = imageName;
         options.AttachStdout = true;
         options.HostConfig = {};
         options.ExposedPorts = {};
         options.Env = [];
 
-        const runFlagsList = runFlags.split(" ");
-        for (const runFlag of runFlagsList) {
-            const [flag, value] = splitAtFirst(runFlag, "=");
-            switch (flag) {
-                case "--env-file": {
-                    options.Env = [...(options.Env || []), ...this.parseEnvFile(value)];
-                    break
-                }
-                case "--env": {
-                    options.Env.push(value.trim());
-                    break
-                }
-                case "--memory": {
-                    options.HostConfig.Memory = this.parseMemory(value);
-                    break;
-                }
-                case "--restart": {
-                    options.HostConfig.RestartPolicy = { Name: this.removeQuotes(value) };
-                    break;
-                }
-                case "--add-host": {
-                    if (!options.HostConfig.ExtraHosts) {
-                        options.HostConfig.ExtraHosts = [];
-                    }
-                    options.HostConfig.ExtraHosts.push(this.removeQuotes(value));
-                    break
-                }
-                case "--volume": {
-                    if (!options.HostConfig.Binds) {
-                        options.HostConfig.Binds = [];
-                    }
-                    options.HostConfig.Binds.push(this.removeQuotes(value));
-                    break;
-                }
-                case "--publish": {
-                    this.setPorts(options, value);
-                    break
-                }
-                default:
-                    throw new Error("Unsupported run flag: " + runFlag);
+        if (deploy.networkMode) {
+            options.HostConfig.NetworkMode = deploy.networkMode;
+        }
+
+        if (deploy.envFile) {
+            options.Env = [...options.Env, ...this.parseEnvFile(deploy.envFile)];
+        }
+
+        if (deploy.envVars) {
+            options.Env.push(...deploy.envVars);
+        }
+
+        if (deploy.memoryLimit) {
+            options.HostConfig.Memory = this.parseMemory(deploy.memoryLimit);
+        }
+
+        if (deploy.restartPolicy) {
+            options.HostConfig.RestartPolicy = { Name: this.removeQuotes(deploy.restartPolicy) };
+        }
+
+        if (deploy.addHosts) {
+            options.HostConfig.ExtraHosts = deploy.addHosts.map(host => this.removeQuotes(host));
+        }
+
+        if (deploy.volumes) {
+            options.HostConfig.Binds = deploy.volumes.map(volume => this.removeQuotes(volume));
+        }
+
+        if (deploy.ports) {
+            for (const port of deploy.ports) {
+                this.setPorts(options, port);
             }
         }
 

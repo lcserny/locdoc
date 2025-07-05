@@ -5,6 +5,12 @@ import fs from "node:fs/promises";
 import {exec, getRandomNumberAsString} from "../lib/lib";
 import {Git} from "./vcs";
 
+// TODO add to rest of deployers + fields directly
+export interface NamedDeploy {
+    type: string;
+    name: string;
+}
+
 export class BaseDeployer {
 
     protected readonly manifest: ManifestType

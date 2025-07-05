@@ -14,11 +14,11 @@ describe("container deployer", () => {
                 },
                 deploy: {
                     name: "cont",
-                    network: "my-net",
-                    runFlags: "something"
+                    type: "container",
+                    networkMode: "my-net"
                 },
                 artifact: {
-                    dockerFile: "dkrF"
+                    dockerFile: "dkrF",
                 }
             };
 
@@ -41,13 +41,12 @@ describe("container deployer", () => {
                 expect.stringContaining(baseName)
             );
 
-            const dockerNet = await deployer.createNetwork();
+            await deployer.createNetwork();
 
-            expect(dockerNet).toBe(manifest.deploy.network);
             expect(docker.networkExists).toHaveBeenCalledTimes(1);
-            expect(docker.networkExists).toHaveBeenCalledWith(manifest.deploy.network);
+            expect(docker.networkExists).toHaveBeenCalledWith(manifest.deploy.networkMode);
             expect(docker.createNetwork).toHaveBeenCalledTimes(1);
-            expect(docker.createNetwork).toHaveBeenCalledWith(manifest.deploy.network);
+            expect(docker.createNetwork).toHaveBeenCalledWith(manifest.deploy.networkMode);
 
             const container = createFakeContainer();
             docker.getContainer = jest.fn().mockImplementationOnce(() => {
@@ -65,10 +64,6 @@ describe("container deployer", () => {
             expect(container.stop).toHaveBeenCalledTimes(1);
             expect(container.remove).toHaveBeenCalledTimes(1);
 
-            expect(manifest.deploy.runFlags).not.toContain(dockerNet);
-            const flags = deployer.ensureNetwork(dockerNet);
-            expect(flags).toContain(dockerNet);
-
             docker.createContainer = jest.fn().mockImplementationOnce(() => {
                 return container;
             });
@@ -77,13 +72,12 @@ describe("container deployer", () => {
                 return new Promise(() => {});
             });
 
-            await deployer.createContainer(artifactRepoDir, manifest.deploy.name, flags, dockerImage);
+            await deployer.createContainer(artifactRepoDir, manifest.deploy, dockerImage);
 
             expect(docker.createContainer).toHaveBeenCalledTimes(1);
             expect(docker.createContainer).toHaveBeenCalledWith(
-                expect.stringContaining(manifest.deploy.name),
                 expect.stringContaining(dockerImage),
-                expect.stringContaining(flags)
+                expect.objectContaining(manifest.deploy)
             );
             expect(container.start).toHaveBeenCalledTimes(1);
 
