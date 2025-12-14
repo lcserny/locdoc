@@ -3,7 +3,7 @@ import fs from "node:fs/promises";
 import {NODEJS_CLI, NodeJSCliManifest} from "./nodejs-cli";
 import {CONTAINER, ContainerManifest} from "./container";
 import lodash from "lodash";
-import {SYSTEMD, SystemDManifest} from "./systemd";
+import {SYSTEMD, SYSTEMD_BASIC, SystemDBasicManifest, SystemDManifest} from "./systemd";
 import type {Logger} from "winston";
 
 export type ManifestType = NodeJSCliManifest | SystemDManifest | ContainerManifest;
@@ -27,6 +27,9 @@ export class ManifestParser {
         switch (manifest.deploy?.type) {
             case NODEJS_CLI:
                 template = new NodeJSCliManifest(this.randomName);
+                break;
+            case SYSTEMD_BASIC:
+                template = new SystemDBasicManifest(this.randomName);
                 break;
             case SYSTEMD:
                 template = new SystemDManifest(this.randomName);

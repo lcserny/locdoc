@@ -24,7 +24,7 @@ const args = program.opts();
 const spinner = ora("Processing...");
 const logger = createLogger(args, spinner);
 
-// TODO: deploy type alternative to sysmteD but for windows?
+// TODO: deploy type alternative to systemD but for windows?
 
 async function main() {
     try {

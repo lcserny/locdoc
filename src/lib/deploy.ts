@@ -1,6 +1,13 @@
 import {NODEJS_CLI, NodeJSCliDeployer, NodeJSCliManifest} from "./nodejs-cli";
 import {CONTAINER, ContainerDeployer, ContainerManifest} from "./container";
-import {SYSTEMD, SystemDDeployer, SystemDManifest} from "./systemd";
+import {
+    SYSTEMD,
+    SYSTEMD_BASIC,
+    SystemDBasicDeployer,
+    SystemDBasicManifest,
+    SystemDDeployer,
+    SystemDManifest
+} from "./systemd";
 import * as os from "node:os";
 import type {Logger} from "winston";
 import {ManifestType} from "./manifest";
@@ -34,6 +41,12 @@ export class DeployRetriever {
         switch (this.type) {
             case NODEJS_CLI:
                 deployer = new NodeJSCliDeployer(this.workDir, this.manifest as NodeJSCliManifest, this.logger, this.git);
+                break;
+            case SYSTEMD_BASIC:
+                if (currentOs == "win32") {
+                    throw new Error("Windows does not support SymtemD deployments.");
+                }
+                deployer = new SystemDBasicDeployer(this.workDir, this.manifest as SystemDBasicManifest, this.logger, this.git);
                 break;
             case SYSTEMD:
                 if (currentOs == "win32") {

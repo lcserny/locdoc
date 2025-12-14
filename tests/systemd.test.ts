@@ -2,7 +2,7 @@ import {createFakeGit, logger} from "../src/lib/test-util";
 import tmp from "tmp-promise";
 import path from "node:path";
 import fs from "node:fs/promises";
-import {SystemDDeployer, SystemDManifest} from "../src/lib/systemd";
+import {SystemDBasicDeployer, SystemDBasicManifest, SystemDDeployer, SystemDManifest} from "../src/lib/systemd";
 import fse from "fs-extra";
 
 describe("systemD deployer", () => {
@@ -45,6 +45,33 @@ describe("systemD deployer", () => {
             expect(serviceFileContents.includes(manifest.deploy.cmdPrefix)).toBeTruthy();
             expect(serviceFileContents.includes(manifest.deploy.preRunFlags)).toBeTruthy();
             expect(serviceFileContents.includes(manifest.deploy.postRunFlags)).toBeTruthy();
+        }, {unsafeCleanup: true});
+    });
+});
+
+describe("systemD-basic deployer", () => {
+    test("deployer deploys correctly", async () => {
+        await tmp.withDir(async (d) => {
+            const manifest = {
+                deploy: {
+                    type: "systemd-basic",
+                    name: "myService",
+                    path: path.join(d.path, "outPath", "app.js"),
+                }
+            };
+            await fs.mkdir(path.dirname(manifest.deploy.path), { recursive: true });
+
+            const deployer = new SystemDBasicDeployer(d.path, manifest as SystemDBasicManifest, logger, createFakeGit());
+
+            const serviceName = `${manifest.deploy.name}.service`;
+            await fs.writeFile(path.join(manifest.deploy.path), "data here", "utf8");
+
+            expect(fse.pathExistsSync(path.join(d.path, serviceName))).toBeFalsy();
+            await deployer.createSystemDFile(d.path, serviceName);
+            expect(fse.pathExistsSync(path.join(d.path, serviceName))).toBeTruthy();
+
+            const serviceFileContents = await fs.readFile(path.join(d.path, serviceName), "utf8");
+            expect(serviceFileContents.includes(manifest.deploy.name)).toBeTruthy();
         }, {unsafeCleanup: true});
     });
 });

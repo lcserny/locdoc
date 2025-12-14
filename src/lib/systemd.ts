@@ -8,6 +8,7 @@ import {BaseManifest} from "../api/manifest";
 import {Git} from "../api/vcs";
 
 export const SYSTEMD = "systemd";
+export const SYSTEMD_BASIC = "systemd-basic";
 
 const NAME_KEY = "<NAME>";
 const EXE_KEY = "<EXE>";
@@ -87,6 +88,25 @@ export class SystemDDeployer extends BaseDeployer {
     }
 }
 
+export class SystemDBasicDeployer extends SystemDDeployer {
+
+    async deploy(): Promise<void> {
+        const servicePath = path.join(os.homedir(), ".config", "systemd", "user");
+        const serviceName = `${this.manifest.deploy.name}.service`;
+
+        await this.stopCurrentService(serviceName);
+        await this.createSystemDFile(servicePath, serviceName);
+        await this.reloadSystemDDaemon();
+        await this.enableSystemDService(serviceName);
+        await this.startSystemDService(serviceName);
+        await this.checkStatusSystemDService(serviceName);
+    }
+
+    async createSystemDFile(servicePath: string, serviceName: string): Promise<void> {
+        await super.createSystemDFile(servicePath, serviceName, "");
+    }
+}
+
 export class SystemDManifest extends BaseManifest {
     artifact = {repo: "", tag: "master", buildCmd: "", buildExecutable: ""};
     config = {repo: "", tag: "master", destinationPath: ""};
@@ -118,6 +138,19 @@ export class SystemDManifest extends BaseManifest {
         }
 
         // TODO: not ok?
+        if (this.deploy?.type == null) {
+            throw new Error("manifest provided has no `deploy.type`");
+        }
+
+        if (this.deploy?.path == null) {
+            throw new Error("manifest provided has no `deploy.path`");
+        }
+    }
+}
+
+export class SystemDBasicManifest extends SystemDManifest {
+
+    validate() {
         if (this.deploy?.type == null) {
             throw new Error("manifest provided has no `deploy.type`");
         }
