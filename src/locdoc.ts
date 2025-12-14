@@ -35,6 +35,7 @@ async function main() {
 
         const workDir = path.join(os.homedir(), "tmp", getRandomNumberAsString(10000, 99999))
         logger.info(`Creating workdir '${workDir}'`);
+        await fs.mkdir(workDir, {recursive: true});
 
         const deployRetriever = new DeployRetriever(manifest.deploy?.type, workDir, manifest, logger, new DefaultGit(), new DefaultDocker());
         const deployer = deployRetriever.getDeployer();
