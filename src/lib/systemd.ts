@@ -10,8 +10,11 @@ import {Git} from "../api/vcs";
 export const SYSTEMD = "systemd";
 export const SYSTEMD_BASIC = "systemd-basic";
 
+const DELAY_KEY = "<DELAY>";
 const NAME_KEY = "<NAME>";
 const EXE_KEY = "<EXE>";
+
+const delaySec = 15;
 
 export class SystemDDeployer extends BaseDeployer {
     private readonly templatePath: string;
@@ -65,6 +68,7 @@ export class SystemDDeployer extends BaseDeployer {
     async createSystemDFile(servicePath: string, serviceName: string, artifactRepoDir: string) {
         this.logger.info("Creating systemd service file");
         let contents = await fs.readFile(this.templatePath, "utf8");
+        contents = contents.replace(DELAY_KEY, String(delaySec));
         contents = contents.replace(NAME_KEY, this.manifest.deploy.name);
         contents = contents.replace(EXE_KEY, this.replaceVars(`${this.manifest.deploy.cmdPrefix} ${this.manifest.deploy.preRunFlags} ${this.manifest.deploy.path} ${this.manifest.deploy.postRunFlags}`, artifactRepoDir));
 

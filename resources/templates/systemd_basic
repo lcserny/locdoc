@@ -6,6 +6,7 @@ StartLimitIntervalSec=50
 [Service]
 Type=simple
 StandardOutput=journal
+ExecStartPre=/usr/bin/sleep <DELAY>
 ExecStart=<EXE>
 Restart=on-failure
 RestartSec=10
