@@ -69,7 +69,7 @@ export class SystemDDeployer extends BaseDeployer {
         this.logger.info("Creating systemd service file");
         let contents = await fs.readFile(this.templatePath, "utf8");
         contents = contents.replace(DELAY_KEY, String(delaySec));
-        contents = contents.replace(NAME_KEY, this.manifest.deploy.name);
+        contents = contents.replaceAll(NAME_KEY, this.manifest.deploy.name);
         contents = contents.replace(EXE_KEY, this.replaceVars(`${this.manifest.deploy.cmdPrefix} ${this.manifest.deploy.preRunFlags} ${this.manifest.deploy.path} ${this.manifest.deploy.postRunFlags}`, artifactRepoDir).trim());
 
         await fs.mkdir(servicePath, { recursive: true });

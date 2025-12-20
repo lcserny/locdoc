@@ -8,6 +8,7 @@ Type=simple
 StandardOutput=journal
 ExecStartPre=/usr/bin/sleep <DELAY>
 ExecStart=<EXE>
+ExecStartPost=/usr/bin/notify-send "<NAME> Service Started" "<NAME> Service is now running in the background."
 Restart=on-failure
 RestartSec=10
 
