@@ -34,10 +34,7 @@ describe("container deployer", () => {
             expect(docker.buildImage).toHaveBeenCalledTimes(1);
             expect(docker.buildImage).toHaveBeenCalledWith(
                 expect.stringMatching(dockerImage),
-                expect.arrayContaining([
-                    expect.stringMatching("."),
-                    expect.stringMatching(manifest.artifact.dockerFile),
-                ]),
+                expect.stringMatching(manifest.artifact.dockerFile),
                 expect.stringContaining(baseName)
             );
 
