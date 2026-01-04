@@ -84,7 +84,7 @@ export class ContainerDeployer extends BaseDeployer {
     async buildImage(artifactRepoDir: string) {
         this.logger.info("Building Docker image");
         const dockerImage = `${this.manifest.image.name}:${this.manifest.image.version}`;
-        await this.docker.buildImage(dockerImage, [".", this.manifest.artifact.dockerFile], artifactRepoDir);
+        await this.docker.buildImage(dockerImage, this.manifest.artifact.dockerFile, artifactRepoDir);
         return dockerImage;
     }
 }

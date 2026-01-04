@@ -22,7 +22,7 @@ export interface DockerWrapper {
     createNetwork(networkName: string): Promise<void>;
 
     // eslint-disable-next-line no-unused-vars
-    buildImage(imageName: string, src: string[], context: string): Promise<void>;
+    buildImage(imageName: string, dockerfile: string, context: string): Promise<void>;
 }
 
 export interface ContainerDeploy extends NamedDeploy {

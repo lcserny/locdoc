@@ -61,8 +61,8 @@ export class DefaultDocker implements DockerWrapper {
         await this.dockerode.createNetwork({ Name: networkName });
     }
 
-    async buildImage(imageName: string, src: string[], context: string): Promise<void> {
-        const stream = await this.dockerode.buildImage({ src, context }, { t: imageName });
+    async buildImage(imageName: string, dockerfile: string, context: string): Promise<void> {
+        const stream = await this.dockerode.buildImage({ src: [".", dockerfile], context }, { t: imageName, dockerfile });
         await new Promise<void>((resolve, reject) => {
             stream.on("end", resolve);
             stream.on("error", reject);
