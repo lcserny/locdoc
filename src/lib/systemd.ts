@@ -1,11 +1,11 @@
-import path from "node:path";
-import {exec} from "./lib";
-import fs from "node:fs/promises";
+import fs from "node:fs";
 import os from "node:os";
+import path from "node:path";
 import type {Logger} from "winston";
 import {BaseDeployer} from "../api/deploy";
 import {BaseManifest} from "../api/manifest";
-import {Git} from "../api/vcs";
+import type {Git} from "../api/vcs";
+import {exec} from "./lib";
 
 export const SYSTEMD = "systemd";
 export const SYSTEMD_BASIC = "systemd-basic";
@@ -67,26 +67,26 @@ export class SystemDDeployer extends BaseDeployer {
 
     async createSystemDFile(servicePath: string, serviceName: string, artifactRepoDir: string) {
         this.logger.info("Creating systemd service file");
-        let contents = await fs.readFile(this.templatePath, "utf8");
+        let contents = fs.readFileSync(this.templatePath, "utf8");
         contents = contents.replace(DELAY_KEY, String(delaySec));
         contents = contents.replaceAll(NAME_KEY, this.manifest.deploy.name);
         contents = contents.replace(EXE_KEY, this.replaceVars(`${this.manifest.deploy.cmdPrefix} ${this.manifest.deploy.preRunFlags} ${this.manifest.deploy.path} ${this.manifest.deploy.postRunFlags}`, artifactRepoDir).trim());
 
-        await fs.mkdir(servicePath, { recursive: true });
-        await fs.writeFile(path.join(servicePath, serviceName), contents);
+        fs.mkdirSync(servicePath, { recursive: true });
+        fs.writeFileSync(path.join(servicePath, serviceName), contents);
     }
 
     async copyArtifact(artifactRepoDir: string) {
         this.logger.info("Copying built artifact to deploy path");
-        await fs.mkdir(path.dirname(this.manifest.deploy.path), { recursive: true });
-        await fs.cp(path.join(artifactRepoDir, this.manifest.artifact.buildExecutable), this.manifest.deploy.path);
+        fs.mkdirSync(path.dirname(this.manifest.deploy.path), { recursive: true });
+        fs.cpSync(path.join(artifactRepoDir, this.manifest.artifact.buildExecutable), this.manifest.deploy.path);
     }
 
     async stopCurrentService(serviceName: string) {
         this.logger.info("Stopping current systemd service");
         try {
             await exec(`bash -c "systemctl --user stop ${serviceName}"`);
-        } catch (e) {
+        } catch (_e) {
             this.logger.info("No current systemd service found");
         }
     }
@@ -115,10 +115,6 @@ export class SystemDManifest extends BaseManifest {
     artifact = {repo: "", tag: "master", buildCmd: "", buildExecutable: ""};
     config = {repo: "", tag: "master", destinationPath: ""};
     deploy = {type: SYSTEMD, name: this.name, path: "", preRunFlags: "", postRunFlags: "", cmdPrefix: ""};
-
-    constructor(randomName: string) {
-        super(randomName);
-    }
 
     validate() {
         if (this.artifact?.repo == null) {

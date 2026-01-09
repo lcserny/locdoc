@@ -1,14 +1,15 @@
-import {DeployRetriever} from "../src/lib/deploy";
-import {createFakeDocker, createFakeGit, logger} from "../src/lib/test-util";
-import {CONTAINER, ContainerDeployer, ContainerManifest} from "../src/lib/container";
-import {NODEJS_CLI, NodeJSCliDeployer, NodeJSCliManifest} from "../src/lib/nodejs-cli";
-import path from "node:path";
-import fse from "fs-extra";
-import tmp from "tmp-promise";
-import {SYSTEMD, SystemDDeployer, SystemDManifest} from "../src/lib/systemd";
+import { describe, expect, test } from "bun:test";
+import fs from "node:fs";
 import os from "node:os";
-import {ManifestType} from "../src/lib/manifest";
+import path from "node:path";
+import tmp from "tmp-promise";
 import {BaseDeployer} from "../src/api/deploy";
+import {CONTAINER, ContainerDeployer, ContainerManifest} from "../src/lib/container";
+import {DeployRetriever} from "../src/lib/deploy";
+import type {ManifestType} from "../src/lib/manifest";
+import {NODEJS_CLI, NodeJSCliDeployer, NodeJSCliManifest} from "../src/lib/nodejs-cli";
+import {SYSTEMD, SystemDDeployer, SystemDManifest} from "../src/lib/systemd";
+import {createFakeDocker, createFakeGit, logger} from "../src/lib/test-util";
 
 describe("deployRetriever", () => {
     test("retriever produces container deployer", async () => {
@@ -52,7 +53,7 @@ describe("deployRetriever", () => {
 
             const artifactRepoDir = await deployer.cloneArtifactRepo();
 
-            const ardRegex = new RegExp(String.raw`^.*${manifest.deploy.name}`, "g");
+            const ardRegex = new RegExp(`^.*${manifest.deploy.name}`);
             expect(git.clone).toHaveBeenCalledTimes(1);
             expect(git.clone).toHaveBeenCalledWith(manifest.artifact.repo, expect.stringMatching(ardRegex), manifest.artifact.tag);
             expect(artifactRepoDir).toMatch(ardRegex);
@@ -94,7 +95,7 @@ describe("deployRetriever", () => {
 
             await deployer.executeBuildCommand(artifactRepoDir);
 
-            expect(await fse.pathExists(path.join(artifactRepoDir, cmdPath))).toBeTruthy();
+            expect(fs.existsSync(path.join(artifactRepoDir, cmdPath))).toBeTruthy();
         }, {unsafeCleanup: true});
     });
 });

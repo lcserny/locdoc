@@ -1,8 +1,9 @@
-import {createFakeContainer, createFakeDocker, createFakeGit, logger} from "../src/lib/test-util";
-import {ContainerDeployer, ContainerManifest} from "../src/lib/container";
-import tmp from "tmp-promise";
+import { describe, expect, mock, test } from "bun:test";
+import fs from "node:fs";
 import path from "node:path";
-import fs from "node:fs/promises";
+import tmp from "tmp-promise";
+import {ContainerDeployer, type ContainerManifest} from "../src/lib/container";
+import {createFakeContainer, createFakeDocker, createFakeGit, logger} from "../src/lib/test-util";
 
 describe("container deployer", () => {
     test("deployer deploys correctly", async () => {
@@ -27,7 +28,7 @@ describe("container deployer", () => {
 
             const baseName = "myRepo";
             const artifactRepoDir = path.join(d.path, baseName)
-            await fs.mkdir(artifactRepoDir, {recursive: true});
+            fs.mkdirSync(artifactRepoDir, {recursive: true});
 
             const dockerImage = await deployer.buildImage(artifactRepoDir);
 
@@ -45,12 +46,20 @@ describe("container deployer", () => {
             expect(docker.createNetwork).toHaveBeenCalledTimes(1);
             expect(docker.createNetwork).toHaveBeenCalledWith(manifest.deploy.networkMode);
 
+            let getContainerCalls = 0;
             const container = createFakeContainer();
-            docker.getContainer = jest.fn().mockImplementationOnce(() => {
-                return container;
+            docker.getContainer = mock(async () => {
+                if (getContainerCalls++ === 0) {
+                    return container;
+                }
+                throw Error("getContainer() failed");
             });
-            container.getStatus = jest.fn().mockImplementationOnce(() => {
-                return "up";
+            let getStatusCalls = 0;
+            container.getStatus = mock(async () => {
+                if (getStatusCalls++ === 0) {
+                    return "up";
+                }
+                throw Error("getStatus() failed");
             });
 
             await deployer.cleanExistingContainer(manifest.deploy.name);
@@ -61,12 +70,20 @@ describe("container deployer", () => {
             expect(container.stop).toHaveBeenCalledTimes(1);
             expect(container.remove).toHaveBeenCalledTimes(1);
 
-            docker.createContainer = jest.fn().mockImplementationOnce(() => {
-                return container;
+            let createContainerCalls = 0;
+            docker.createContainer = mock(async () => {
+                if (createContainerCalls++ === 0) {
+                    return container;
+                }
+                throw Error("createContainer() failed");
             });
 
-            container.start = jest.fn().mockImplementationOnce(() => {
-                return new Promise(() => {});
+            let startCalls = 0;
+            container.start = mock(async () => {
+                if (startCalls++ === 0) {
+                    return;
+                }
+                throw Error("start() failed");
             });
 
             await deployer.createContainer(artifactRepoDir, manifest.deploy, dockerImage);

@@ -1,9 +1,10 @@
-import winston from "winston";
-import fs from "node:fs/promises";
-import tmp from "tmp-promise";
+import { mock } from "bun:test";
+import fs from "node:fs";
 import path from "node:path";
-import {Git} from "../api/vcs";
-import {ContainerWrapper, DockerWrapper} from "../api/container";
+import tmp from "tmp-promise";
+import winston from "winston";
+import type {ContainerWrapper, DockerWrapper} from "../api/container";
+import type {Git} from "../api/vcs";
 
 const { combine, timestamp, prettyPrint, errors } = winston.format;
 
@@ -15,38 +16,36 @@ export const logger = winston.createLogger({
     level: "none"
 });
 
-export async function createFiles(dir: string, filesMap: Map<string, string>) {
+export function createFiles(dir: string, filesMap: Map<string, string>) {
     filesMap = filesMap || new Map();
     for (const [fileName, contents] of filesMap) {
         const fullPath = path.join(dir, fileName);
-        await fs.writeFile(fullPath, contents);
+        fs.writeFileSync(fullPath, contents);
     }
 }
 
 export function createFakeGit(): Git {
-    return { clone: jest.fn().mockImplementation(() => { }) };
+    return { clone: mock(async () => {}) };
 }
 
 export function createFakeDocker(): DockerWrapper {
     return {
-        cleanup: jest.fn().mockImplementation(() => { }),
-
-        buildImage: jest.fn().mockImplementation(() => { }),
-
-        createContainer: jest.fn().mockImplementation(() => { }),
-        getContainer: jest.fn().mockImplementation(() => { }),
-
-        createNetwork: jest.fn().mockImplementation(() => { }),
-        networkExists: jest.fn().mockImplementation(() => { }),
+        cleanup: mock(async () => { }),
+        buildImage: mock(async () => { }),
+        createContainer: mock(async () => {
+            return {} as ContainerWrapper;
+        } ),
+        getContainer: mock(async () => { return undefined }),
+        createNetwork: mock(async () => { }),
+        networkExists: mock(async () => { return false }),
     };
 }
 
 export function createFakeContainer(): ContainerWrapper {
     return {
-        start: jest.fn().mockImplementation(() => { }),
-        stop: jest.fn().mockImplementation(() => { }),
-        remove: jest.fn().mockImplementation(() => { }),
-
-        getStatus: jest.fn().mockImplementation(() => { })
+        start: mock(async () => { }),
+        stop: mock(async () => { }),
+        remove: mock(async () => { }),
+        getStatus: mock(async () => { return "up" })
     };
 }

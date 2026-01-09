@@ -1,5 +1,5 @@
-import simpleGit, {SimpleGit} from "simple-git";
-import {Git} from "../../api/vcs";
+import simpleGit, {type SimpleGit} from "simple-git";
+import type {Git} from "../../api/vcs";
 
 export class DefaultGit implements Git {
     private git: SimpleGit = simpleGit();

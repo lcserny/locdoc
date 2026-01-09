@@ -1,6 +1,6 @@
-import Dockerode, {type ContainerCreateOptions} from "dockerode";
 import fs from "node:fs";
-import {ContainerWrapper, ContainerDeploy, DockerWrapper} from "../../api/container";
+import Dockerode, {type ContainerCreateOptions} from "dockerode";
+import type {ContainerDeploy, ContainerWrapper, DockerWrapper} from "../../api/container";
 
 export class DefaultContainer implements ContainerWrapper {
 
@@ -101,7 +101,7 @@ export class ContainerOptionsParser {
         const parsedValue = memoryValue.slice(0, -1);
         const memoryInBytes = parseInt(parsedValue, 10);
 
-        if (isNaN(memoryInBytes)) {
+        if (Number.isNaN(memoryInBytes)) {
             throw new Error(`Invalid memory value: ${memoryValue}`);
         }
 

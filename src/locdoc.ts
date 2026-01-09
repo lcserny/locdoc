@@ -1,14 +1,12 @@
-#!/usr/bin/env node
-
-import {program} from "commander";
-import {ManifestParser} from "./lib/manifest";
-import path from "node:path";
-import os from "node:os";
 import fs from "node:fs/promises";
-import {DeployRetriever} from "./lib/deploy";
-import {createLogger, getRandomNumberAsString} from "./lib/lib";
+import os from "node:os";
+import path from "node:path";
+import {program} from "commander";
 import ora from "ora";
 import {DefaultDocker} from "./lib/container/dockerode";
+import {DeployRetriever} from "./lib/deploy";
+import {createLogger, getRandomNumberAsString} from "./lib/lib";
+import {ManifestParser} from "./lib/manifest";
 import {DefaultGit} from "./lib/vcs/simplegit";
 
 program

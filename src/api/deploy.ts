@@ -1,9 +1,9 @@
-import {ManifestType} from "../lib/manifest";
-import type {Logger} from "winston";
-import path from "node:path";
 import fs from "node:fs/promises";
+import path from "node:path";
+import type {Logger} from "winston";
 import {exec, getRandomNumberAsString} from "../lib/lib";
-import {Git} from "./vcs";
+import type {ManifestType} from "../lib/manifest";
+import type {Git} from "./vcs";
 
 // TODO add to rest of deployers + fields directly
 export interface NamedDeploy {

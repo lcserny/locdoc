@@ -132,3 +132,5 @@ dist
 *.log.*
 build/
 dist/
+locdoc
+/.idea/

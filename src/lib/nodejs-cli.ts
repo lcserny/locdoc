@@ -1,11 +1,10 @@
+import fs from "node:fs";
 import path from "node:path";
-import fs from "node:fs/promises";
-import {symlinkExists} from "./lib";
-import fse from "fs-extra";
 import type {Logger} from "winston";
 import {BaseDeployer} from "../api/deploy";
 import {BaseManifest} from "../api/manifest";
-import {Git} from "../api/vcs";
+import type {Git} from "../api/vcs";
+import {symlinkExists} from "./lib";
 
 export const NODEJS_CLI = "nodejs-cli";
 
@@ -30,22 +29,22 @@ export class NodeJSCliDeployer extends BaseDeployer {
         for (const [key, val] of Object.entries(this.manifest.deploy.bins)) {
             const target = path.join(newArtifactPath, val.toString());
             const link = path.join(this.manifest.deploy.binOut, key);
-            if (await symlinkExists(link)) {
-                await fs.rm(link);
+            if (symlinkExists(link)) {
+                fs.rmSync(link);
             }
-            await fs.symlink(target, link, "junction");
-            await fs.chmod(link, "0755");
+            fs.symlinkSync(target, link, "junction");
+            fs.chmodSync(link, "0755");
         }
     }
 
     async moveCli(artifactRepoDir: string) {
         this.logger.info(`Moving cli to bin out: ${this.manifest.deploy.binOut}`);
-        await fs.mkdir(this.manifest.deploy.binOut, { recursive: true });
+        fs.mkdirSync(this.manifest.deploy.binOut, { recursive: true });
         const newArtifactPath = path.join(this.manifest.deploy.binOut, path.basename(artifactRepoDir));
-        if (await fse.pathExists(newArtifactPath)) {
-            await fs.rm(newArtifactPath, { recursive: true });
+        if (fs.existsSync(newArtifactPath)) {
+            fs.rmSync(newArtifactPath, { recursive: true });
         }
-        await fs.rename(artifactRepoDir, newArtifactPath);
+        fs.renameSync(artifactRepoDir, newArtifactPath);
         return newArtifactPath;
     }
 }

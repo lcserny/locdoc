@@ -1,4 +1,4 @@
-import {NamedDeploy} from "./deploy";
+import type {NamedDeploy} from "./deploy";
 
 export interface ContainerWrapper {
     start(): Promise<void>;

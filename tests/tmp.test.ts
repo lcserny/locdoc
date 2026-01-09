@@ -1,13 +1,13 @@
-import fs from "node:fs/promises";
+import { describe, expect, test } from "bun:test";
+import fs from "node:fs";
 import path from "node:path";
-import fse from "fs-extra";
-import {createFiles} from "../src/lib/test-util";
 import tmp from "tmp-promise";
+import {createFiles} from "../src/lib/test-util";
 
 describe("tmp util tests", () => {
     test("creating tmp dir without any files", async () => {
         await tmp.withDir(async (dir) => {
-            expect(await fse.pathExists(dir.path)).toBeTruthy();
+            expect(fs.existsSync(dir.path)).toBeTruthy();
         });
     });
 
@@ -17,16 +17,16 @@ describe("tmp util tests", () => {
         filesMap.set("f2.yml", `some: test`);
 
         await tmp.withDir(async (dir) => {
-            await createFiles(dir.path, filesMap);
-            expect(await fse.pathExists(dir.path)).toBeTruthy();
+            createFiles(dir.path, filesMap);
+            expect(fs.existsSync(dir.path)).toBeTruthy();
 
             const f1 = path.join(dir.path, "f1.json");
-            expect(await fse.pathExists(f1)).toBeTruthy();
-            expect(await fs.readFile(f1, "utf8")).toBe(`["hello"]`);
+            expect(fs.existsSync(f1)).toBeTruthy();
+            expect(fs.readFileSync(f1, "utf8")).toBe(`["hello"]`);
 
             const f2 = path.join(dir.path, "f2.yml");
-            expect(await fse.pathExists(f2)).toBeTruthy();
-            expect(await fs.readFile(f2, "utf8")).toBe(`some: test`);
+            expect(fs.existsSync(f2)).toBeTruthy();
+            expect(fs.readFileSync(f2, "utf8")).toBe(`some: test`);
         }, {unsafeCleanup: true});
     });
 });

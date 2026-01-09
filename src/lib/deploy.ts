@@ -1,18 +1,18 @@
-import {NODEJS_CLI, NodeJSCliDeployer, NodeJSCliManifest} from "./nodejs-cli";
-import {CONTAINER, ContainerDeployer, ContainerManifest} from "./container";
+import * as os from "node:os";
+import type {Logger} from "winston";
+import type {DockerWrapper} from "../api/container";
+import type { Git } from "../api/vcs";
+import {CONTAINER, ContainerDeployer, type ContainerManifest} from "./container";
+import type {ManifestType} from "./manifest";
+import {NODEJS_CLI, NodeJSCliDeployer, type NodeJSCliManifest} from "./nodejs-cli";
 import {
     SYSTEMD,
     SYSTEMD_BASIC,
     SystemDBasicDeployer,
-    SystemDBasicManifest,
+    type SystemDBasicManifest,
     SystemDDeployer,
-    SystemDManifest
+    type SystemDManifest
 } from "./systemd";
-import * as os from "node:os";
-import type {Logger} from "winston";
-import {ManifestType} from "./manifest";
-import {DockerWrapper} from "../api/container";
-import { Git } from "../api/vcs";
 
 export type DeployerType = NodeJSCliDeployer | SystemDDeployer | ContainerDeployer;
 
@@ -43,13 +43,13 @@ export class DeployRetriever {
                 deployer = new NodeJSCliDeployer(this.workDir, this.manifest as NodeJSCliManifest, this.logger, this.git);
                 break;
             case SYSTEMD_BASIC:
-                if (currentOs == "win32") {
+                if (currentOs === "win32") {
                     throw new Error("Windows does not support SymtemD deployments.");
                 }
                 deployer = new SystemDBasicDeployer(this.workDir, this.manifest as SystemDBasicManifest, this.logger, this.git);
                 break;
             case SYSTEMD:
-                if (currentOs == "win32") {
+                if (currentOs === "win32") {
                     throw new Error("Windows does not support SymtemD deployments.");
                 }
                 deployer = new SystemDDeployer(this.workDir, this.manifest as SystemDManifest, this.logger, this.git);

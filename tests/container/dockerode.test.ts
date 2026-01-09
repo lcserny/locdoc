@@ -1,12 +1,13 @@
+import { describe, expect, test } from "bun:test";
+import fs from "node:fs";
 import tmp from "tmp-promise";
-import fs from "node:fs/promises";
-import {ContainerOptionsParser} from "../../src/lib/container/dockerode";
 import {CONTAINER} from "../../src/lib/container";
+import {ContainerOptionsParser} from "../../src/lib/container/dockerode";
 
 describe("container parser", () => {
     test("can parse --env-file", async () => {
         await tmp.withFile(async (f) => {
-            await fs.writeFile(f.path, "FOO=bar\nBAZ=qux");
+            fs.writeFileSync(f.path, "FOO=bar\nBAZ=qux");
 
             const parser = new ContainerOptionsParser();
             const options = parser.parseRunOptions("imgName",

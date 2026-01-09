@@ -1,9 +1,9 @@
-import fs from "node:fs/promises";
-import util from "node:util";
 import child_process from "node:child_process";
-import winston, {transports} from "winston";
-import type {Ora} from "ora";
+import fs from "node:fs";
+import util from "node:util";
 import type {OptionValues} from "commander";
+import type {Ora} from "ora";
+import winston, {transports} from "winston";
 
 const { combine, timestamp, prettyPrint, printf, errors } = winston.format;
 
@@ -53,17 +53,17 @@ export function createLogger(args: OptionValues, spinner?: Ora) {
             ? prettyPrint()
             : printf(({timestamp, level, message, stack}) => {
                 const text = `${timestamp} ${level.toUpperCase()} ${message}`;
-                return stack ? text + '\n' + stack : text;
+                return stack ? `${text}\n${stack}` : text;
             })),
         transports: [new SpinnerConsoleTransport(spinner)]
     });
 }
 
-export async function symlinkExists(symlinkPath: string) {
+export function symlinkExists(symlinkPath: string) {
     try {
-        await fs.lstat(symlinkPath);
+        fs.lstatSync(symlinkPath);
         return true;
-    } catch (e) {
+    } catch (_e) {
         return false;
     }
 }

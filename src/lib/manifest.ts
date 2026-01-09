@@ -1,10 +1,10 @@
-import YAML from "yaml";
-import fs from "node:fs/promises";
-import {NODEJS_CLI, NodeJSCliManifest} from "./nodejs-cli";
-import {CONTAINER, ContainerManifest} from "./container";
+import fs from "node:fs";
 import lodash from "lodash";
-import {SYSTEMD, SYSTEMD_BASIC, SystemDBasicManifest, SystemDManifest} from "./systemd";
 import type {Logger} from "winston";
+import YAML from "yaml";
+import {CONTAINER, ContainerManifest} from "./container";
+import {NODEJS_CLI, NodeJSCliManifest} from "./nodejs-cli";
+import {SYSTEMD, SYSTEMD_BASIC, SystemDBasicManifest, SystemDManifest} from "./systemd";
 
 export type ManifestType = NodeJSCliManifest | SystemDManifest | ContainerManifest;
 
@@ -20,7 +20,7 @@ export class ManifestParser {
     async parse(manifestFilePath: string): Promise<ManifestType> {
         this.logger.info(`Parsing manifest '${manifestFilePath}'`);
 
-        const manifestFile = await fs.readFile(manifestFilePath, "utf8");
+        const manifestFile = fs.readFileSync(manifestFilePath, "utf8");
         const manifest = YAML.parse(manifestFile);
 
         let template: ManifestType;

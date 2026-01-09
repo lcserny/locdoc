@@ -1,10 +1,11 @@
-import {ManifestParser} from "../src/lib/manifest";
-import {logger} from "../src/lib/test-util";
+import { describe, expect, test } from "bun:test";
+import fs from "node:fs";
 import tmp from "tmp-promise";
-import fs from "node:fs/promises";
 import type {ContainerManifest} from "../src/lib/container";
+import {ManifestParser} from "../src/lib/manifest";
 import type {NodeJSCliManifest} from "../src/lib/nodejs-cli";
 import type {SystemDManifest} from "../src/lib/systemd";
+import {logger} from "../src/lib/test-util";
 
 describe("manifestParser", () => {
     const parser = new ManifestParser(logger, "someName");
@@ -21,7 +22,7 @@ config:
 `.trim();
 
         await tmp.withFile(async (f) => {
-            await fs.writeFile(f.path, minimalContainerManifest);
+            fs.writeFileSync(f.path, minimalContainerManifest);
             const manifest = await parser.parse(f.path) as ContainerManifest;
 
             expect(manifest.artifact.repo).toBe("someGitRepo");
@@ -54,7 +55,7 @@ config:
 `.trim();
 
         await tmp.withFile(async (f) => {
-            await fs.writeFile(f.path, minimalNodeCliManifest);
+            fs.writeFileSync(f.path, minimalNodeCliManifest);
             const manifest = await parser.parse(f.path) as NodeJSCliManifest;
 
             expect(manifest.artifact.repo).toBe("cliGitRepo");
@@ -90,7 +91,7 @@ config:
 `.trim();
 
         await tmp.withFile(async (f) => {
-            await fs.writeFile(f.path, minimalSystemDManifest);
+            fs.writeFileSync(f.path, minimalSystemDManifest);
             const manifest = await parser.parse(f.path) as SystemDManifest;
 
             expect(manifest.artifact.repo).toBe("systemdGitRepo");

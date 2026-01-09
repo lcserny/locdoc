@@ -1,8 +1,8 @@
 import type {Logger} from "winston";
+import type {ContainerDeploy, DockerWrapper} from "../api/container";
 import {BaseDeployer} from "../api/deploy";
 import {BaseManifest} from "../api/manifest";
-import {ContainerDeploy, DockerWrapper} from "../api/container";
-import {Git} from "../api/vcs";
+import type {Git} from "../api/vcs";
 
 export const CONTAINER = "container";
 
@@ -98,7 +98,7 @@ export class ContainerManifest extends BaseManifest {
     constructor(randomName: string) {
         super(randomName);
         this.deploy.name = this.name;
-        this.image.name = this.name + "-image";
+        this.image.name = `${this.name}-image`;
     }
 
     validate() {
