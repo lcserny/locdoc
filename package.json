@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "build": "bun build ./src/locdoc.ts --compile --outfile locdoc",
-    "install": "mv ./locdoc $HOME/.local/bin"
+    "setup": "mv ./locdoc $HOME/.local/bin"
   },
   "dependencies": {
     "commander": "^12.1.0",
