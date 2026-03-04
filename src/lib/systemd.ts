@@ -14,7 +14,7 @@ const DELAY_KEY = "<DELAY>";
 const NAME_KEY = "<NAME>";
 const EXE_KEY = "<EXE>";
 
-const delaySec = 15;
+const delaySec = 5;
 
 export class SystemDDeployer extends BaseDeployer {
     private readonly templatePath: string;
