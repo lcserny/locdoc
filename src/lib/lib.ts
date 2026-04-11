@@ -1,13 +1,10 @@
-import child_process from "node:child_process";
 import fs from "node:fs";
-import util from "node:util";
+import {spawn} from "node:child_process";
 import type {OptionValues} from "commander";
 import type {Ora} from "ora";
 import winston, {transports} from "winston";
 
 const { combine, timestamp, prettyPrint, printf, errors } = winston.format;
-
-export const exec = util.promisify(child_process.exec);
 
 export function getRandomNumberAsString(min: number, max: number) {
     return Math.floor(Math.random() * (max - min) + min).toString();
@@ -66,4 +63,20 @@ export function symlinkExists(symlinkPath: string) {
     } catch (_e) {
         return false;
     }
+}
+
+export async function executeBash(cmd: string, cwd?: string) {
+    return new Promise((resolve, reject) => {
+        const child = spawn('bash', ['-c', cmd], {
+            cwd: cwd,
+            stdio: 'inherit'
+        });
+
+        child.on('close', (code) => {
+            if (code === 0) resolve(true);
+            else reject(new Error(`Exit code ${code}`));
+        });
+
+        child.on('error', reject);
+    });
 }

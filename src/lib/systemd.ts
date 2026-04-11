@@ -1,11 +1,12 @@
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import {spawn} from "node:child_process";
 import type {Logger} from "winston";
 import {BaseDeployer} from "../api/deploy";
 import {BaseManifest} from "../api/manifest";
 import type {Git} from "../api/vcs";
-import {exec} from "./lib";
+import {executeBash} from "./lib.ts";
 
 export const SYSTEMD = "systemd";
 export const SYSTEMD_BASIC = "systemd-basic";
@@ -47,22 +48,22 @@ export class SystemDDeployer extends BaseDeployer {
 
     async checkStatusSystemDService(serviceName: string) {
         this.logger.info("Checking status of systemd service");
-        await exec(`bash -c "systemctl --user status ${serviceName}"`);
+        await executeBash(`systemctl --user status ${serviceName}`);
     }
 
     async startSystemDService(serviceName: string) {
         this.logger.info("Starting systemd service");
-        await exec(`bash -c "systemctl --user start ${serviceName}"`);
+        await executeBash(`systemctl --user start ${serviceName}`);
     }
 
     async enableSystemDService(serviceName: string) {
         this.logger.info("Enabling systemd service");
-        await exec(`bash -c "systemctl --user enable ${serviceName}"`);
+        await executeBash(`systemctl --user enable ${serviceName}`);
     }
 
     async reloadSystemDDaemon() {
         this.logger.info("Refreshing systemd service");
-        await exec(`bash -c "systemctl --user daemon-reload"`);
+        await executeBash(`systemctl --user daemon-reload`);
     }
 
     async createSystemDFile(servicePath: string, serviceName: string, artifactRepoDir: string) {
@@ -85,7 +86,7 @@ export class SystemDDeployer extends BaseDeployer {
     async stopCurrentService(serviceName: string) {
         this.logger.info("Stopping current systemd service");
         try {
-            await exec(`bash -c "systemctl --user stop ${serviceName}"`);
+            await executeBash(`systemctl --user stop ${serviceName}`);
         } catch (_e) {
             this.logger.info("No current systemd service found");
         }

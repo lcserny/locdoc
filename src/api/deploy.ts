@@ -1,7 +1,8 @@
 import fs from "node:fs/promises";
+import {spawn} from "node:child_process";
 import path from "node:path";
 import type {Logger} from "winston";
-import {exec, getRandomNumberAsString} from "../lib/lib";
+import {executeBash, getRandomNumberAsString} from "../lib/lib";
 import type {ManifestType} from "../lib/manifest";
 import type {Git} from "./vcs";
 
@@ -56,6 +57,6 @@ export class BaseDeployer {
 
     async executeBuildCommand(artifactRepoDir: string) {
         this.logger.info("Executing build command");
-        await exec(`bash -c '${this.manifest.artifact.buildCmd}'`, {cwd: artifactRepoDir});
+        await executeBash(this.manifest.artifact.buildCmd, artifactRepoDir);
     }
 }
