@@ -169,7 +169,11 @@ export class ContainerOptionsParser {
             options.HostConfig.Mounts = deploy.volumes.map(volume => {
                 const v = this.removeQuotes(volume);
                 console.log(`DEBUG: Volume String -> [${v}] | Length: ${v.length}`);
-                const [source, target] = v.split(':');
+
+                const lastColon = volume.lastIndexOf(':');
+                const source = volume.substring(0, lastColon);
+                const target = volume.substring(lastColon + 1);
+                
                 return {
                     Target: target,
                     Source: source,
