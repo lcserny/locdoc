@@ -139,7 +139,7 @@ export class ContainerOptionsParser {
         options.Env = [];
 
         if (deploy.networkMode) {
-            options.HostConfig.NetworkMode = deploy.networkMode;
+            options.HostConfig.NetworkMode = deploy.networkMode || "vm-network";
         }
 
         if (deploy.envFile) {
