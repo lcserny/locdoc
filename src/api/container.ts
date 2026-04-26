@@ -34,4 +34,5 @@ export interface ContainerDeploy extends NamedDeploy {
     volumes?: string[];
     ports?: string[];
     networkMode?: string;
+    permissions?: string;
 }

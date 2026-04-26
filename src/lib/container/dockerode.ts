@@ -132,14 +132,17 @@ export class ContainerOptionsParser {
         const options: ContainerCreateOptions = {};
         options.name = deploy.name;
         options.Image = imageName;
-        options.User = "1000:1000";
         options.AttachStdout = true;
         options.HostConfig = {};
         options.ExposedPorts = {};
         options.Env = [];
 
         if (deploy.networkMode) {
-            options.HostConfig.NetworkMode = deploy.networkMode || "vm-network";
+            options.HostConfig.NetworkMode = deploy.networkMode;
+        }
+
+        if (deploy.permissions) {
+            options.User = deploy.permissions;
         }
 
         if (deploy.envFile) {
