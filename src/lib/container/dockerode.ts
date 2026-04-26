@@ -122,10 +122,10 @@ export class ContainerOptionsParser {
     }
 
     private removeQuotes(value: string): string {
-        if (value.startsWith('"') && value.endsWith('"')) {
-            return value.slice(1, -1);
+        if (!value) {
+            return value;
         }
-        return value;
+        return value.trim().replace(/^["']|["']$/g, '');
     }
 
     parseRunOptions(imageName: string, deploy: ContainerDeploy): ContainerCreateOptions {
@@ -166,7 +166,18 @@ export class ContainerOptionsParser {
         }
 
         if (deploy.volumes) {
-            options.HostConfig.Binds = deploy.volumes.map(volume => this.removeQuotes(volume));
+            options.HostConfig.Mounts = deploy.volumes.map(volume => {
+                const v = this.removeQuotes(volume);
+                console.log(`DEBUG: Volume String -> [${v}] | Length: ${v.length}`);
+                const [source, target] = v.split(':');
+                return {
+                    Target: target,
+                    Source: source,
+                    Type: 'bind',
+                    ReadOnly: false
+                };
+            });
+
         }
 
         if (deploy.ports) {

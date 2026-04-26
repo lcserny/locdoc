@@ -59,8 +59,8 @@ describe("container parser", () => {
 
         const options = parser.parseRunOptions("imgName",
             { type: CONTAINER, name: "contName", volumes: [ "/host/path:/container/path" ] });
-        expect(options.HostConfig?.Binds?.length).toEqual(1);
-        expect(options.HostConfig?.Binds?.[0]).toEqual("/host/path:/container/path");
+        expect(options.HostConfig?.Mounts?.length).toEqual(1);
+        expect(options.HostConfig?.Mounts?.[0]).toEqual({ Target: "/container/path", Source: "/host/path", Type: "bind", ReadOnly: false });
     });
 
     test("can parse --publish", () => {
