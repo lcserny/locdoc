@@ -66,7 +66,21 @@ export class DefaultDocker implements DockerWrapper {
         await new Promise<void>((resolve, reject) => {
             stream.on("end", resolve);
             stream.on("error", reject);
-            stream.on("data", () => {});
+            stream.on("data", (chunk) => {
+                try {
+                    const payload = JSON.parse(chunk.toString());
+                    if (payload.stream) {
+                        process.stdout.write(payload.stream);
+                    }
+                    if (payload.error || payload.errorDetail) {
+                        reject(new Error(payload.error || "Docker build failed inside the container."));
+                    }
+                } catch (e) {
+                    if (chunk.toString().includes('"error"')) {
+                        reject(new Error("Docker build failed (detected error in raw stream)."));
+                    }
+                }
+            });
         });
     }
 
