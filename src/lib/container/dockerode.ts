@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import Dockerode, {type ContainerCreateOptions} from "dockerode";
 import type {ContainerDeploy, ContainerWrapper, DockerWrapper} from "../../api/container";
+import type {Logger} from "winston";
 
 export class DefaultContainer implements ContainerWrapper {
 
@@ -30,10 +31,12 @@ export class DefaultContainer implements ContainerWrapper {
 
 export class DefaultDocker implements DockerWrapper {
 
+    private readonly logger: Logger;
     private dockerode: Dockerode;
 
-    constructor() {
+    constructor(logger: Logger) {
         this.dockerode = new Dockerode();
+        this.logger = logger;
     }
 
     async createContainer(dockerImage: string, deploy: ContainerDeploy): Promise<ContainerWrapper> {
@@ -70,7 +73,7 @@ export class DefaultDocker implements DockerWrapper {
                 try {
                     const payload = JSON.parse(chunk.toString());
                     if (payload.stream) {
-                        process.stdout.write(payload.stream);
+                        this.logger.info(payload.stream);
                     }
                     if (payload.error || payload.errorDetail) {
                         reject(new Error(payload.error || "Docker build failed inside the container."));
