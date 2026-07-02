@@ -69,14 +69,25 @@ export async function executeBash(cmd: string, cwd?: string) {
     return new Promise((resolve, reject) => {
         const child = spawn('bash', ['-c', cmd], {
             cwd: cwd,
-            stdio: 'inherit'
+            stdio: ['ignore', 'pipe', 'pipe']
         });
+
+        let output = '';
+        child.stdout?.on('data', (data) => output += data.toString());
+        child.stderr?.on('data', (data) => output += data.toString());
 
         child.on('close', (code) => {
-            if (code === 0) resolve(true);
-            else reject(new Error(`Exit code ${code}`));
+            if (code === 0) {
+                resolve(true);
+            } else {
+                console.error(output);
+                reject(new Error(`Command failed with exit code ${code}`));
+            }
         });
 
-        child.on('error', reject);
+        child.on('error', (err) => {
+            console.error(output);
+            reject(err);
+        });
     });
 }
